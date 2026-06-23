@@ -1,0 +1,97 @@
+<view class="container">
+
+  <!-- 核心结论卡（最顶部，最醒目）-->
+  <view class="conclusion-card" wx:if="{{conclusion}}">
+    <view class="conclusion-label">服务效果摘要</view>
+    <view class="conclusion-main">
+      过去 {{conclusion.days}} 天，团队日均发起
+      <text class="hl">{{conclusion.dailyAvg}}</text>
+      次 AI 协作，节省工时相当于
+      <text class="hl">{{conclusion.fullTimeEquiv}}</text>
+      名全职助理的工作量
+    </view>
+    <view class="conclusion-pills">
+      <view class="pill">{{conclusion.totalUsers}} 人用过</view>
+      <view class="pill pill-green">近7天 {{conclusion.activeRate}}% 仍活跃</view>
+      <view class="pill">累计节省 {{conclusion.savedHours}}h</view>
+    </view>
+    <view class="conclusion-formula">工时估算 = 对话次数 × 10 分钟 ÷ 60，按每次 AI 协作节省人工处理时间计</view>
+  </view>
+
+  <!-- KPI 卡片 -->
+  <view class="section-label">使用数据明细</view>
+  <view class="kpi-grid">
+    <view class="kpi-card kpi-blue">
+      <view class="kpi-val">{{kpi.total_messages}}</view>
+      <view class="kpi-label">累计对话次数</view>
+    </view>
+    <view class="kpi-card kpi-green">
+      <view class="kpi-val">{{kpi.active_7d}}</view>
+      <view class="kpi-label">近 7 天活跃员工</view>
+    </view>
+    <view class="kpi-card kpi-yellow">
+      <view class="kpi-val">{{kpi.total_users}}</view>
+      <view class="kpi-label">累计使用员工</view>
+    </view>
+    <view class="kpi-card kpi-purple">
+      <view class="kpi-val">{{savedHours}}h</view>
+      <view class="kpi-label">估算节省工时</view>
+      <view class="kpi-sub">按每次对话节省 10 分钟计</view>
+    </view>
+    <view class="kpi-card kpi-pink">
+      <view class="kpi-val">{{kpi.token_total}}</view>
+      <view class="kpi-label">Token 消耗</view>
+      <view class="kpi-sub">AI 处理工作量的规模指标</view>
+    </view>
+    <view class="kpi-card kpi-indigo">
+      <view class="kpi-val">{{kpi.token_cost_usd}}</view>
+      <view class="kpi-label">预估成本 USD</view>
+    </view>
+  </view>
+
+  <!-- 趋势图 -->
+  <view class="card">
+    <view class="card-title">📈 近 14 天使用趋势</view>
+    <view class="card-hint">每日对话次数，周末明显回落说明团队真实在用</view>
+    <view class="trend-wrap">
+      <block wx:for="{{trend}}" wx:key="date_label">
+        <view class="tcol {{item.is_today ? 'today' : ''}}">
+          <view class="tval">{{item.count}}</view>
+          <view class="tbar-wrap">
+            <view class="tbar" style="height:{{item.heightPct}}%"></view>
+          </view>
+          <view class="tdate">{{item.date_label}}</view>
+        </view>
+      </block>
+    </view>
+  </view>
+
+  <!-- 功能分布环形图 -->
+  <view class="card">
+    <view class="card-title">🧩 用 AI 做了哪些事</view>
+    <view class="card-hint">关键词粗分类，一条消息可能跨多类</view>
+    <view class="ring-wrap">
+      <canvas type="2d" id="ring-canvas" class="ring-canvas"></canvas>
+    </view>
+    <view class="legend-wrap">
+      <view class="legend-item" wx:for="{{funcChart}}" wx:key="name">
+        <view class="legend-dot" style="background:{{item.color}}"></view>
+        <view class="legend-name">{{item.name}}</view>
+        <view class="legend-pct">{{item.pct}}%</view>
+        <view class="legend-n">{{item.count}}</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 排行榜入口 -->
+  <view class="card rank-entry" bindtap="goRank">
+    <view class="rank-entry-left">
+      <view class="card-title">🏆 员工使用排行</view>
+      <view class="card-hint">点击查看每人最近提问内容</view>
+    </view>
+    <view class="rank-entry-arrow">›</view>
+  </view>
+
+  <view class="data-note">数据区间 {{since}} 至今 · 截止 {{generatedAt}}</view>
+
+</view>

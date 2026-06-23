@@ -1,0 +1,94 @@
+<view class="container">
+
+  <view class="demo-banner">⚠️ 演示数据：所有数字均为占位 mock。销售/毛利/费用类接入后为真实领星数据；负责人等带 <text class="mock-tag">mock</text> 的字段暂无数据源。</view>
+
+  <!-- 角色切换（权限分级占位） -->
+  <view class="role-bar">
+    <view
+      wx:for="{{roleOrder}}" wx:key="*this"
+      class="role-tab {{role === item ? 'role-tab-on' : ''}}"
+      data-role="{{item}}" bindtap="onRoleTap">
+      {{roleLabel[item]}}
+    </view>
+  </view>
+  <view class="role-hint">当前视角：{{roleName}} · 数据 {{generatedAt}} · 近 {{rangeDays}} 天</view>
+
+  <!-- 异常预警（AI 监控） -->
+  <view wx:if="{{alerts.length > 0}}" class="alert-card">
+    <view class="alert-title">⚠️ 待关注 · {{alerts.length}} 项</view>
+    <view
+      wx:for="{{alerts}}" wx:key="index"
+      class="alert-row alert-{{item.level}}"
+      data-name="{{item.name}}" bindtap="onAlertTap">
+      <view class="alert-tag alert-tag-{{item.level}}">{{item.tag}}</view>
+      <view class="alert-body">
+        <text class="alert-name">{{item.name}}</text>
+        <text class="alert-msg">{{item.msg}}</text>
+      </view>
+      <view class="alert-arrow">›</view>
+    </view>
+  </view>
+
+  <!-- KPI 总览 -->
+  <view class="kpi-grid">
+    <view class="kpi-item">
+      <view class="kpi-num text-blue">{{kpi.sales}}</view>
+      <view class="kpi-label">销售额</view>
+    </view>
+    <view class="kpi-item">
+      <view class="kpi-num {{kpi.profit[0] === '-' ? 'text-pink' : 'text-green'}}">{{kpi.profit}}</view>
+      <view class="kpi-label">毛利</view>
+    </view>
+    <view class="kpi-item">
+      <view class="kpi-num text-yellow">{{kpi.marginPct}}%</view>
+      <view class="kpi-label">毛利率</view>
+    </view>
+    <view class="kpi-item">
+      <view class="kpi-num text-purple">{{kpi.acosPct}}%</view>
+      <view class="kpi-label">综合 ACOS</view>
+    </view>
+  </view>
+
+  <!-- 项目对比 -->
+  <view class="card">
+    <view class="card-title">项目对比（{{kpi.projectCount}} 个）</view>
+    <view class="card-hint">点项目展开费用拆解 · 红色为亏损项目</view>
+
+    <view
+      wx:for="{{projects}}" wx:key="local_name"
+      class="proj {{item.loss ? 'proj-loss' : ''}}">
+
+      <view class="proj-head" data-name="{{item.local_name}}" bindtap="onProjectTap">
+        <view class="proj-left">
+          <view class="proj-name">
+            {{item.local_name}}
+            <text class="proj-team">{{item.team}}</text>
+          </view>
+          <view class="proj-meta">{{item.sku_count}} SKU · {{item.ownersText}}<text class="mock-tag">mock</text></view>
+        </view>
+        <view class="proj-right">
+          <view class="proj-sales">{{item.salesText}}</view>
+          <view class="proj-sub {{item.loss ? 'text-pink' : 'text-green'}}">
+            毛利 {{item.profitText}} · {{item.margin_pct}}%
+          </view>
+        </view>
+      </view>
+
+      <view class="proj-bar"><view class="proj-bar-fill" style="width:{{item.barWidth}}%"></view></view>
+
+      <!-- 展开：费用拆解 -->
+      <view wx:if="{{expanded === item.local_name}}" class="costs">
+        <view class="costs-title">费用拆解（各类动作产生的成本）</view>
+        <view wx:for="{{costs}}" wx:for-item="c" wx:key="description" class="cost-row">
+          <view class="cost-name">{{c.description}}</view>
+          <view class="cost-bar"><view class="cost-bar-fill" style="width:{{c.barWidth}}%"></view></view>
+          <view class="cost-val">{{c.costText}}</view>
+        </view>
+        <view wx:if="{{costs.length === 0}}" class="cost-empty">暂无费用数据</view>
+        <view class="detail-link" data-name="{{item.local_name}}" catchtap="onDetailTap">查看完整详情 ›</view>
+      </view>
+    </view>
+  </view>
+
+  <view class="foot-note">UI 占位 · 数据接入后由云函数按角色下发</view>
+</view>

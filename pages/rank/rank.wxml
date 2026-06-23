@@ -1,0 +1,44 @@
+<view class="container">
+
+  <view class="card-title" style="margin-bottom:24rpx">🏆 员工使用排行</view>
+
+  <view class="rank-list">
+    <view
+      class="rank-row {{index < 3 ? 'top' + (index+1) : ''}}"
+      wx:for="{{rank}}"
+      wx:key="rank"
+      data-uid="{{item.uid}}"
+      bindtap="tapRow"
+    >
+      <view class="rank-pos">{{item.rank}}</view>
+      <view class="rank-info">
+        <view class="rank-name">{{item.name}}</view>
+        <view class="rank-dept dept-{{item.dept}}">{{item.dept === 'duo' ? '多趣' : item.dept === 'gez' ? '格致' : '—'}}</view>
+      </view>
+      <view class="rank-bar-wrap">
+        <view class="rank-bar" style="width:{{item.barPct}}%"></view>
+      </view>
+      <view class="rank-stat">
+        <text class="rank-msgs">{{item.messages}}</text>
+        <text class="rank-days"> · {{item.active_days}}天</text>
+      </view>
+    </view>
+  </view>
+
+</view>
+
+<!-- 弹窗：最近提问 -->
+<view class="modal-mask {{showModal ? 'show' : ''}}" bindtap="closeModal">
+  <view class="modal-box" catchtap="">
+    <view class="modal-header">
+      <view class="modal-title">{{selectedUser}} · 最近提问</view>
+      <view class="modal-close" bindtap="closeModal">×</view>
+    </view>
+    <scroll-view scroll-y class="modal-body">
+      <view class="msg-item" wx:for="{{recentMsgs}}" wx:key="index">
+        <view class="msg-date">{{item.d}}</view>
+        <view class="msg-text">{{item.t}}</view>
+      </view>
+    </scroll-view>
+  </view>
+</view>

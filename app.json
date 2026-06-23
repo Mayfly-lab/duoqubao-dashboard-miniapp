@@ -1,0 +1,43 @@
+{
+  "pages": [
+    "pages/finance/finance",
+    "pages/project/project",
+    "pages/team/team",
+    "pages/index/index",
+    "pages/rank/rank",
+    "pages/capabilities/capabilities"
+  ],
+  "tabBar": {
+    "color": "#94a3c4",
+    "selectedColor": "#5b8cff",
+    "backgroundColor": "#19233c",
+    "borderStyle": "black",
+    "list": [
+      {
+        "pagePath": "pages/finance/finance",
+        "text": "财务看板"
+      },
+      {
+        "pagePath": "pages/team/team",
+        "text": "团队管理"
+      },
+      {
+        "pagePath": "pages/index/index",
+        "text": "使用数据"
+      },
+      {
+        "pagePath": "pages/capabilities/capabilities",
+        "text": "服务能力"
+      }
+    ]
+  },
+  "window": {
+    "backgroundTextStyle": "dark",
+    "navigationBarBackgroundColor": "#0f1729",
+    "navigationBarTitleText": "多趣猫 AI 服务",
+    "navigationBarTextStyle": "white",
+    "backgroundColor": "#0f1729"
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json"
+}

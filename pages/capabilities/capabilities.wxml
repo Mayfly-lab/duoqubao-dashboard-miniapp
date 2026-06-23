@@ -1,0 +1,55 @@
+<view class="container">
+
+  <view class="hero">
+    <view class="hero-label">AI 服务内容</view>
+    <view class="hero-title">帮团队解决了哪些问题</view>
+    <view class="hero-sub">在飞书直接说话，或用 /指令 精确调用</view>
+  </view>
+
+  <!-- 问题-解法卡片 -->
+  <view class="prob-list">
+    <view
+      class="prob-card {{expandedIdx === index ? 'expanded' : ''}}"
+      wx:for="{{problems}}"
+      wx:key="problem"
+      data-idx="{{index}}"
+      bindtap="toggleExpand"
+    >
+      <!-- 收起态 -->
+      <view class="prob-header">
+        <view class="prob-icon">{{item.icon}}</view>
+        <view class="prob-body">
+          <view class="prob-problem">{{item.problem}}</view>
+          <view class="prob-solution">→ {{item.solution}}</view>
+        </view>
+        <view class="prob-arrow {{expandedIdx === index ? 'open' : ''}}">›</view>
+      </view>
+
+      <!-- 展开态 -->
+      <view class="prob-detail" wx:if="{{expandedIdx === index}}">
+        <view class="detail-example">
+          <view class="detail-example-label">比如可以问</view>
+          <view class="detail-example-text">{{item.example}}</view>
+        </view>
+        <view class="detail-proof">📌 {{item.proof}}</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 指令速查 -->
+  <view class="section-divider">
+    <view class="divider-line"></view>
+    <view class="divider-text">指令速查</view>
+    <view class="divider-line"></view>
+  </view>
+  <view class="divider-hint">发 /帮助 查看全部，也可以直接用自然语言说</view>
+
+  <view class="cmd-grid">
+    <view class="cmd-item" wx:for="{{commands}}" wx:key="cmd">
+      <text class="cmd-code">{{item.cmd}}</text>
+      <text class="cmd-desc">{{item.desc}}</text>
+    </view>
+  </view>
+
+  <view style="height:60rpx"></view>
+</view>
