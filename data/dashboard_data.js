@@ -1,86 +1,15 @@
 module.exports = {
-  "generated_at": "2026-06-18 09:38",
+  "generated_at": "2026-06-26 14:26",
   "since": "2026-04-29",
   "kpi": {
     "total_users": "42",
-    "active_7d": "34",
-    "total_messages": "3,883",
-    "token_total": "1.78亿",
-    "token_cost_usd": "$521",
-    "top_user_messages": "495"
-  },
-  "trend_14d": [
-    {
-      "date_label": "6/4",
-      "count": 157,
-      "is_today": false
-    },
-    {
-      "date_label": "6/5",
-      "count": 134,
-      "is_today": false
-    },
-    {
-      "date_label": "6/6",
-      "count": 87,
-      "is_today": false
-    },
-    {
-      "date_label": "6/7",
-      "count": 35,
-      "is_today": false
-    },
-    {
-      "date_label": "6/8",
-      "count": 122,
-      "is_today": false
-    },
-    {
-      "date_label": "6/9",
-      "count": 112,
-      "is_today": false
-    },
-    {
-      "date_label": "6/10",
-      "count": 63,
-      "is_today": false
-    },
-    {
-      "date_label": "6/11",
-      "count": 162,
-      "is_today": false
-    },
-    {
-      "date_label": "6/12",
-      "count": 79,
-      "is_today": false
-    },
-    {
-      "date_label": "6/13",
-      "count": 22,
-      "is_today": false
-    },
-    {
-      "date_label": "6/14",
-      "count": 6,
-      "is_today": false
-    },
-    {
-      "date_label": "6/15",
-      "count": 90,
-      "is_today": false
-    },
-    {
-      "date_label": "6/16",
-      "count": 86,
-      "is_today": false
-    },
-    {
-      "date_label": "6/17",
-      "count": 98,
-      "is_today": true
-    }
-  ],
+    "active_7d": "27",
+    "total_messages": "4,375",
+    "token_total": "40.37亿",
+    "token_cost_usd": "$5114",
+    "top_user_messages": "503"
+},
+  "trend_14d": [{"date_label": "6/12", "count": 282}, {"date_label": "6/13", "count": 65}, {"date_label": "6/14", "count": 127}, {"date_label": "6/15", "count": 187}, {"date_label": "6/16", "count": 253}, {"date_label": "6/17", "count": 186}, {"date_label": "6/18", "count": 195}, {"date_label": "6/19", "count": 0}, {"date_label": "6/20", "count": 9}, {"date_label": "6/21", "count": 15}, {"date_label": "6/22", "count": 178}, {"date_label": "6/23", "count": 180}, {"date_label": "6/24", "count": 157}, {"date_label": "6/25", "count": 301}],
   "func_dist": [
     {
       "name": "选品/调研",

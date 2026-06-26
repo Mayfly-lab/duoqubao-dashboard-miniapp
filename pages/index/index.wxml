@@ -51,12 +51,12 @@
 
   <!-- 趋势图 -->
   <view class="card">
-    <view class="card-title">📈 近 14 天使用趋势</view>
-    <view class="card-hint">每日对话次数，周末明显回落说明团队真实在用</view>
+    <view class="card-title">📈 近 14 天每日 AI 成本</view>
+    <view class="card-hint">每日 token 成本（USD），反映使用强度 · 妙搭真实数据</view>
     <view class="trend-wrap">
       <block wx:for="{{trend}}" wx:key="date_label">
         <view class="tcol {{item.is_today ? 'today' : ''}}">
-          <view class="tval">{{item.count}}</view>
+          <view class="tval">${{item.count}}</view>
           <view class="tbar-wrap">
             <view class="tbar" style="height:{{item.heightPct}}%"></view>
           </view>

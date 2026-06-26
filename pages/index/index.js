@@ -23,6 +23,12 @@ Page({
   async loadData() {
     this.setData({ loading: true })
     const data = await loadDashboard()
+    // B 方案:用妙搭爬取的真实 KPI 覆盖(趋势/功能分布暂保留 mock,待 A 镜像妙搭看板再接)
+    const usage = require('../../data/usage_snapshot.js')
+    if (usage && usage.kpi) {
+      data.kpi = Object.assign({}, data.kpi, usage.kpi)
+      data.generated_at = usage.crawled_at || data.generated_at
+    }
 
     const funcChart = getFuncForChart(data.func_dist)
     const funcTotal = funcChart.reduce((s, f) => s + f.count, 0)

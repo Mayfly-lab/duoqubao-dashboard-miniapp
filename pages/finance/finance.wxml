@@ -1,33 +1,11 @@
 <view class="container">
 
-  <view class="demo-banner">⚠️ 演示数据：所有数字均为占位 mock。销售/毛利/费用类接入后为真实领星数据；负责人等带 <text class="mock-tag">mock</text> 的字段暂无数据源。</view>
+  <view class="demo-banner">销售/毛利/费用为 <text class="text-green">真实领星数据</text>（全期累计 · duoqubao-api）；按 <text class="text-blue">产品类</text> 聚合（型号加总）。</view>
 
-  <!-- 角色切换（权限分级占位） -->
-  <view class="role-bar">
-    <view
-      wx:for="{{roleOrder}}" wx:key="*this"
-      class="role-tab {{role === item ? 'role-tab-on' : ''}}"
-      data-role="{{item}}" bindtap="onRoleTap">
-      {{roleLabel[item]}}
-    </view>
-  </view>
-  <view class="role-hint">当前视角：{{roleName}} · 数据 {{generatedAt}} · 近 {{rangeDays}} 天</view>
+  <view wx:if="{{loading}}" class="role-hint">加载中…</view>
+  <view wx:if="{{error}}" class="role-hint" style="color:#f06292">{{error}}</view>
 
-  <!-- 异常预警（AI 监控） -->
-  <view wx:if="{{alerts.length > 0}}" class="alert-card">
-    <view class="alert-title">⚠️ 待关注 · {{alerts.length}} 项</view>
-    <view
-      wx:for="{{alerts}}" wx:key="index"
-      class="alert-row alert-{{item.level}}"
-      data-name="{{item.name}}" bindtap="onAlertTap">
-      <view class="alert-tag alert-tag-{{item.level}}">{{item.tag}}</view>
-      <view class="alert-body">
-        <text class="alert-name">{{item.name}}</text>
-        <text class="alert-msg">{{item.msg}}</text>
-      </view>
-      <view class="alert-arrow">›</view>
-    </view>
-  </view>
+  <view class="role-hint">全公司盈亏 · 数据快照 {{generatedAt}} · 全期累计</view>
 
   <!-- KPI 总览 -->
   <view class="kpi-grid">
@@ -49,46 +27,78 @@
     </view>
   </view>
 
-  <!-- 项目对比 -->
+  <!-- 待关注（AI 监控） -->
   <view class="card">
-    <view class="card-title">项目对比（{{kpi.projectCount}} 个）</view>
-    <view class="card-hint">点项目展开费用拆解 · 红色为亏损项目</view>
+    <view class="card-head">
+      <view class="card-title">⚠️ 待关注 · {{alertTotal}} 项</view>
+      <filter-dropdown options="{{alertFilters}}" value="{{alertFilter}}" bind:change="onAlertFilterChange" />
+    </view>
+
+    <view wx:if="{{alertTotal === 0}}" class="empty-hint">当前筛选下无待关注项</view>
 
     <view
-      wx:for="{{projects}}" wx:key="local_name"
-      class="proj {{item.loss ? 'proj-loss' : ''}}">
-
-      <view class="proj-head" data-name="{{item.local_name}}" bindtap="onProjectTap">
-        <view class="proj-left">
-          <view class="proj-name">
-            {{item.local_name}}
-            <text class="proj-team">{{item.team}}</text>
-          </view>
-          <view class="proj-meta">{{item.sku_count}} SKU · {{item.ownersText}}<text class="mock-tag">mock</text></view>
-        </view>
-        <view class="proj-right">
-          <view class="proj-sales">{{item.salesText}}</view>
-          <view class="proj-sub {{item.loss ? 'text-pink' : 'text-green'}}">
-            毛利 {{item.profitText}} · {{item.margin_pct}}%
-          </view>
-        </view>
+      wx:for="{{alerts}}" wx:key="index"
+      class="alert-row alert-{{item.level}}"
+      data-name="{{item.name}}" bindtap="onAlertTap">
+      <view class="alert-tag alert-tag-{{item.level}}">{{item.tag}}</view>
+      <view class="alert-body">
+        <text class="alert-name">{{item.name}}</text>
+        <text class="alert-msg">{{item.msg}}</text>
       </view>
+      <view class="alert-arrow">›</view>
+    </view>
 
-      <view class="proj-bar"><view class="proj-bar-fill" style="width:{{item.barWidth}}%"></view></view>
-
-      <!-- 展开：费用拆解 -->
-      <view wx:if="{{expanded === item.local_name}}" class="costs">
-        <view class="costs-title">费用拆解（各类动作产生的成本）</view>
-        <view wx:for="{{costs}}" wx:for-item="c" wx:key="description" class="cost-row">
-          <view class="cost-name">{{c.description}}</view>
-          <view class="cost-bar"><view class="cost-bar-fill" style="width:{{c.barWidth}}%"></view></view>
-          <view class="cost-val">{{c.costText}}</view>
-        </view>
-        <view wx:if="{{costs.length === 0}}" class="cost-empty">暂无费用数据</view>
-        <view class="detail-link" data-name="{{item.local_name}}" catchtap="onDetailTap">查看完整详情 ›</view>
-      </view>
+    <view wx:if="{{alertTotal > 3}}" class="collapse-toggle" bindtap="onToggleAlerts">
+      {{showAllAlerts ? '收起 ▲' : '展开全部 ' + alertTotal + ' 项 ▼'}}
     </view>
   </view>
 
-  <view class="foot-note">UI 占位 · 数据接入后由云函数按角色下发</view>
+  <!-- 产品类对比 -->
+  <view class="card">
+    <view class="card-head">
+      <view class="card-title">产品类对比（{{catTotal}} 类）</view>
+      <filter-dropdown options="{{catFilters}}" value="{{catFilter}}" bind:change="onCatFilterChange" />
+    </view>
+    <view class="card-hint">点类展开看整体指标 · 红色为亏损类 · bar 按销售额</view>
+
+    <view wx:if="{{catTotal === 0}}" class="empty-hint">当前筛选下无产品类</view>
+
+    <view
+      wx:for="{{categories}}" wx:key="line"
+      class="cat {{item.loss ? 'cat-loss' : ''}}">
+
+      <view class="cat-head" data-line="{{item.line}}" bindtap="onCatTap">
+        <view class="cat-left">
+          <view class="cat-name">{{item.line}}</view>
+          <view class="cat-meta">{{item.count}} 个型号</view>
+        </view>
+        <view class="cat-right">
+          <view class="cat-sales">{{item.salesText}}</view>
+          <view class="cat-sub {{item.loss ? 'text-pink' : 'text-green'}}">
+            毛利 {{item.profitText}} · {{item.marginPct}}%
+          </view>
+        </view>
+        <text class="go-arrow">{{item.expanded ? '▲' : '▼'}}</text>
+      </view>
+
+      <view class="cat-bar"><view class="cat-bar-fill" style="width:{{item.barWidth}}%"></view></view>
+
+      <!-- 展开：类整体指标 -->
+      <view wx:if="{{item.expanded}}" class="cat-detail">
+        <view class="cat-metrics">
+          <view class="metric"><view class="metric-num text-blue">{{item.salesText}}</view><view class="metric-label">销售额</view></view>
+          <view class="metric"><view class="metric-num {{item.loss ? 'text-pink' : 'text-green'}}">{{item.profitText}}</view><view class="metric-label">毛利</view></view>
+          <view class="metric"><view class="metric-num text-green">{{item.realizedText}}</view><view class="metric-label">已到账</view></view>
+          <view class="metric"><view class="metric-num text-yellow">{{item.pendingText}}</view><view class="metric-label">待回款</view></view>
+        </view>
+        <view class="enter-btn" data-line="{{item.line}}" catchtap="onEnterCategory">进入类看板 ›</view>
+      </view>
+    </view>
+
+    <view wx:if="{{catTotal > 8}}" class="collapse-toggle" bindtap="onToggleCats">
+      {{showAllCats ? '收起 ▲' : '展开全部 ' + catTotal + ' 类 ▼'}}
+    </view>
+  </view>
+
+  <view class="foot-note">数据：领星销售/回款 + 金蝶财务采购/报销（duoqubao-api 静态快照 {{generatedAt}}）· 盈亏/回款/采购为全期累计 · ⚠️ 款年混算（含 24/25/26 款）</view>
 </view>

@@ -1,43 +1,58 @@
 <view class="container">
 
-  <view class="demo-banner">⚠️ 演示数据：团队看板依赖员工归属、组织架构、动作数据，目前<text class="mock-tag">mock</text>这三类数据源均未建立，整页为占位。</view>
+  <view class="demo-banner">团队 = 各产品类下的 <text class="text-green">负责人 / 参与人</text>（registry 归属）· 个人毛利只计主责 · 费用动作 opex 全期（型号级偏漏）。</view>
 
-  <!-- 角色切换 -->
-  <view class="role-bar">
-    <view
-      wx:for="{{roleOrder}}" wx:key="*this"
-      class="role-tab {{role === item ? 'role-tab-on' : ''}}"
-      data-role="{{item}}" bindtap="onRoleTap">
-      {{roleLabel[item]}}
-    </view>
-  </view>
-  <view class="role-hint">当前视角：{{roleName}} · 按毛利贡献排序</view>
+  <view wx:if="{{loading}}" class="card">加载中…</view>
+  <view wx:if="{{error}}" class="card" style="color:#f06292">{{error}}</view>
 
-  <view class="card">
-    <view class="card-title">员工经营（{{employees.length}} 人）<text class="mock-tag">mock</text></view>
-    <view class="card-hint">动作 vs 收益：看每个人的动作有没有带来收益 · 红色为负贡献</view>
+  <block wx:if="{{!loading && !error}}">
+  <view class="role-hint">按产品类看人员 · 数据快照 {{generatedAt}} · 全期累计</view>
 
-    <view wx:for="{{employees}}" wx:key="name" class="emp {{item.loss ? 'emp-loss' : ''}}">
-      <view class="emp-head">
-        <view class="emp-left">
-          <view class="emp-name">{{item.name}}<text class="emp-team">{{item.team}}</text></view>
-          <view class="emp-meta">负责：{{item.projectsText}}</view>
-        </view>
-        <view class="emp-right">
-          <view class="emp-contrib {{item.loss ? 'text-pink' : 'text-green'}}">{{item.contribText}}</view>
-          <view class="emp-sub">毛利贡献</view>
-        </view>
+  <view wx:for="{{categories}}" wx:key="line" class="card">
+    <!-- 类 -->
+    <view class="cat-head" data-line="{{item.line}}" bindtap="onCatTap">
+      <view class="cat-left">
+        <view class="cat-name">{{item.line}}<text class="cat-arrow">{{item.expanded ? ' ▲' : ' ▼'}}</text></view>
+        <view class="cat-meta">{{item.peopleCount}} 人</view>
       </view>
-
-      <view class="emp-bar"><view class="emp-bar-fill" style="width:{{item.barWidth}}%"></view></view>
-
-      <view class="emp-stats">
-        <view class="stat"><text class="stat-num">{{item.actions}}</text><text class="stat-lab">近30天动作</text></view>
-        <view class="stat"><text class="stat-num text-yellow">{{item.perAction}}</text><text class="stat-lab">每动作产出</text></view>
-        <view class="stat"><text class="stat-num text-purple">{{item.adCostText}}</text><text class="stat-lab">广告花费</text></view>
+      <view class="cat-right">
+        <view class="cat-sales">{{item.salesText}}</view>
+        <view class="cat-sub {{item.loss ? 'text-pink' : 'text-green'}}">毛利 {{item.profitText}} · {{item.marginPct}}%</view>
       </view>
     </view>
-  </view>
+    <view class="cat-bar"><view class="cat-bar-fill" style="width:{{item.barWidth}}%"></view></view>
 
-  <view class="foot-note">UI 占位 · 员工归属/动作数据接入后由云函数按角色下发</view>
+    <!-- 类下人员 -->
+    <view wx:if="{{item.expanded}}" class="people">
+      <view wx:for="{{item.people}}" wx:for-item="pe" wx:key="name" class="person">
+        <view class="person-head" data-name="{{pe.name}}" bindtap="onPersonTap">
+          <view class="person-name">{{pe.name}}<text class="person-arrow">{{pe.expanded ? ' ▲' : ' ▼'}}</text></view>
+          <view class="person-right">
+            <view class="person-contrib {{pe.loss ? 'text-pink' : 'text-green'}}">毛利 {{pe.profitText}}</view>
+            <view class="person-opex">费用动作 {{pe.opexTotalText}}</view>
+          </view>
+        </view>
+
+        <!-- 个人:负责产品 + 费用动作 -->
+        <view wx:if="{{pe.expanded}}" class="person-detail">
+          <view wx:for="{{pe.products}}" wx:for-item="p" wx:key="name" class="prod-block">
+            <view class="prod-row">
+              <text class="prod-name">{{p.name}}<text class="prod-role">{{p.role}}</text></text>
+              <text class="prod-val {{p.loss ? 'text-pink' : 'text-green'}}">{{p.salesText}}</text>
+            </view>
+            <view wx:if="{{p.actions.length}}" class="prod-acts">
+              <view wx:for="{{p.actions}}" wx:for-item="a" wx:key="category" class="act-row">
+                <text class="act-name">· {{a.category}}</text>
+                <text class="act-val">{{a.costText}}</text>
+              </view>
+            </view>
+            <view wx:else class="empty-mini">· 无报销记录（型号级偏漏）</view>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+  </block>
+
+  <view class="foot-note">数据：领星 + 金蝶财务（duoqubao-api 快照 {{generatedAt}}）· 团队按产品类组织 · 个人毛利只计主责</view>
 </view>

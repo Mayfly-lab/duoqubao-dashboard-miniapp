@@ -1,6 +1,7 @@
 {
   "pages": [
     "pages/finance/finance",
+    "pages/category/category",
     "pages/project/project",
     "pages/team/team",
     "pages/index/index",

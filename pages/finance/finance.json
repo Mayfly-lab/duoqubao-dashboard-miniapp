@@ -1,4 +1,6 @@
 {
-  "navigationBarTitleText": "项目财务看板",
-  "usingComponents": {}
+  "navigationBarTitleText": "盈亏总览",
+  "usingComponents": {
+    "filter-dropdown": "/components/filter-dropdown/filter-dropdown"
+  }
 }

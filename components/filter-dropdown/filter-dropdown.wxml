@@ -1,0 +1,12 @@
+<view class="fd">
+  <view class="fd-btn" bindtap="toggle">
+    {{currentLabel}}<text class="fd-arrow">{{open ? ' ▲' : ' ▼'}}</text>
+  </view>
+  <view wx:if="{{open}}" class="fd-mask" bindtap="toggle"></view>
+  <view wx:if="{{open}}" class="fd-menu">
+    <view
+      wx:for="{{options}}" wx:key="value"
+      class="fd-item {{item.value === value ? 'fd-item-on' : ''}}"
+      data-value="{{item.value}}" bindtap="onSelect">{{item.label}}</view>
+  </view>
+</view>

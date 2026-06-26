@@ -1,0 +1,154 @@
+<view class="container">
+  <view wx:if="{{loading}}" class="card">加载中…</view>
+  <view wx:if="{{error}}" class="card" style="color:#f06292">{{error}}</view>
+
+  <block wx:if="{{!loading && !error}}">
+  <!-- 类整体 + 回款 -->
+  <view class="card">
+    <view class="cat-title">{{line}}<text class="cat-tag">{{kpi.count}} 型号</text></view>
+    <view class="ph-grid">
+      <view class="ph-item"><view class="ph-num text-blue">{{kpi.salesText}}</view><view class="ph-lab">销售额</view></view>
+      <view class="ph-item"><view class="ph-num {{kpi.loss ? 'text-pink' : 'text-green'}}">{{kpi.profitText}}</view><view class="ph-lab">毛利 {{kpi.marginPct}}%</view></view>
+      <view class="ph-item"><view class="ph-num text-green">{{kpi.realizedText}}</view><view class="ph-lab">已到账</view></view>
+      <view class="ph-item"><view class="ph-num text-yellow">{{kpi.pendingText}}</view><view class="ph-lab">待回款</view></view>
+    </view>
+  </view>
+
+  <!-- L0 双进度条 -->
+  <view wx:if="{{level0}}" class="card">
+    <view class="card-title">回本进度 · 锁定 {{level0.lockPct}}%</view>
+    <view class="card-hint">上=投入 {{level0.investText}} / 下=回款 {{level0.backText}}（同比例尺·¥）⚠️ 全期累计·含多代款(款混),非 2026 款口径;头程按采购台数估偏高</view>
+    <view class="prog">
+      <view wx:for="{{level0.investSegs}}" wx:key="label" class="prog-seg {{item.cls}}" style="width:{{item.w}}%"></view>
+    </view>
+    <view class="prog-legend">
+      <view wx:for="{{level0.investSegs}}" wx:key="label" class="lg"><text class="dot {{item.cls}}"></text>{{item.label}} {{item.val}}</view>
+    </view>
+    <view class="prog">
+      <view wx:for="{{level0.backSegs}}" wx:key="label" class="prog-seg {{item.cls}}" style="width:{{item.w}}%"></view>
+    </view>
+    <view class="prog-legend">
+      <view wx:for="{{level0.backSegs}}" wx:key="label" class="lg"><text class="dot {{item.cls}}"></text>{{item.label}} {{item.val}}</view>
+    </view>
+  </view>
+
+  <!-- L1 四问 -->
+  <view wx:if="{{four}}" class="card">
+    <view class="card-title">四问</view>
+    <view class="q-grid">
+      <view class="q-card">
+        <view class="q-t">① 钱→货</view>
+        <view class="q-r">采购 {{four.q1.buy}} · {{four.q1.qty}} 台</view>
+        <view class="q-r">已付 {{four.q1.paid}} · 欠厂 <text class="text-yellow">{{four.q1.owe}}</text></view>
+      </view>
+      <view class="q-card">
+        <view class="q-t">② 货→费用</view>
+        <view class="q-r">头程 {{four.q2.freight}}（估）</view>
+        <view class="q-r">运营 {{four.q2.opex}} · 平台费 {{four.q2.plat}}</view>
+      </view>
+      <view class="q-card">
+        <view class="q-t">③ 卖→回款</view>
+        <view class="q-r">销售额 {{four.q3.sales}}</view>
+        <view class="q-r">已到账 <text class="text-green">{{four.q3.realized}}</text></view>
+      </view>
+      <view class="q-card">
+        <view class="q-t">④ 盈余</view>
+        <view class="q-r">投入 {{four.q4.invest}} · 锁定 {{four.q4.locked}}</view>
+        <view class="q-r">超额 <text class="{{four.q4.overPos ? 'text-green' : 'text-pink'}}">{{four.q4.over}}</text></view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 弹药 -->
+  <view wx:if="{{inventory}}" class="card">
+    <view class="card-title">库存弹药</view>
+    <view class="ph-grid">
+      <view class="ph-item"><view class="ph-num">{{inventory.xianhuo}}</view><view class="ph-lab">现货</view></view>
+      <view class="ph-item"><view class="ph-num">{{inventory.zaitu}}</view><view class="ph-lab">在途</view></view>
+    </view>
+  </view>
+
+  <!-- 回款时间轴 -->
+  <view wx:if="{{timeline.length}}" class="card">
+    <view class="card-title">回款时间轴（月度到账 · USD）</view>
+    <view class="card-hint">柱高=当月到账额，红=负值（退款&gt;订单）</view>
+    <view wx:for="{{timeline}}" wx:key="ym" class="tl-row">
+      <text class="tl-ym">{{item.ym}}</text>
+      <view class="tl-bar2"><view class="tl-fill {{item.neg ? 'tl-fill-neg' : ''}}" style="width:{{item.w}}%"></view></view>
+      <text class="tl-amt {{item.neg ? 'text-pink' : 'text-green'}}">{{item.valShort}}</text>
+    </view>
+  </view>
+
+  <!-- 广告 -->
+  <view wx:if="{{ads}}" class="card">
+    <view class="card-title">广告效率</view>
+    <view class="ph-grid">
+      <view class="ph-item"><view class="ph-num">{{ads.spendText}}</view><view class="ph-lab">广告花费</view></view>
+      <view class="ph-item"><view class="ph-num text-green">{{ads.revText}}</view><view class="ph-lab">广告销售</view></view>
+      <view class="ph-item"><view class="ph-num text-purple">{{ads.acos}}%</view><view class="ph-lab">ACOS</view></view>
+    </view>
+  </view>
+
+  <!-- 退款 -->
+  <view wx:if="{{refund}}" class="card">
+    <view class="card-title">退款</view>
+    <view class="ph-grid">
+      <view class="ph-item"><view class="ph-num text-pink">{{refund.rate}}%</view><view class="ph-lab">退款率</view></view>
+      <view class="ph-item"><view class="ph-num">{{refund.returns}}</view><view class="ph-lab">退货量</view></view>
+      <view class="ph-item"><view class="ph-num text-pink">{{refund.amtText}}</view><view class="ph-lab">退款额</view></view>
+    </view>
+  </view>
+
+  <!-- 费用扣除 -->
+  <view wx:if="{{fees.length}}" class="card">
+    <view class="card-title">费用扣除（平台）</view>
+    <view wx:for="{{fees}}" wx:key="description" class="fee-row">
+      <view class="fee-name">{{item.description}}</view>
+      <view class="fee-bar"><view class="fee-bar-fill" style="width:{{item.barWidth}}%"></view></view>
+      <view class="fee-val">{{item.costText}}</view>
+    </view>
+  </view>
+
+  <!-- 品质星级 -->
+  <view wx:if="{{stars.length}}" class="card">
+    <view class="card-title">质量 · 星级（by ASIN）</view>
+    <view wx:for="{{stars}}" wx:key="asin" class="star-row">
+      <view class="star-asin">{{item.asin}}<text class="star-rev">{{item.reviews}} 评论</text></view>
+      <view class="{{item.low ? 'text-pink' : 'text-green'}}">★ {{item.star}}</view>
+    </view>
+  </view>
+
+  <!-- 运营费用 / 费用动作 -->
+  <view wx:if="{{opex.length}}" class="card">
+    <view class="card-title">运营费用 · 费用动作（¥）</view>
+    <view class="card-hint">测评=刷单/测评 · 按类归集（摘要匹配，型号级会漏）</view>
+    <view wx:for="{{opex}}" wx:key="category" class="fee-row">
+      <view class="fee-name">{{item.category}}</view>
+      <view class="fee-bar"><view class="fee-bar-fill opex-fill" style="width:{{item.barWidth}}%"></view></view>
+      <view class="fee-val opex-val">{{item.costText}}</view>
+    </view>
+  </view>
+
+  <!-- 型号列表 -->
+  <view class="card">
+    <view class="card-title">型号（{{kpi.count}}）</view>
+    <view class="card-hint">👆 点任意型号 → 进入该型号详细看板</view>
+    <view
+      wx:for="{{models}}" wx:key="name"
+      class="cat cat-click {{item.loss ? 'cat-loss' : ''}}"
+      data-name="{{item.name}}" bindtap="onModelTap">
+      <view class="cat-head">
+        <view class="cat-name">{{item.name}}</view>
+        <view class="cat-right">
+          <view class="cat-sales">{{item.salesText}}</view>
+          <view class="cat-sub {{item.loss ? 'text-pink' : 'text-green'}}">毛利 {{item.profitText}} · {{item.marginPct}}%</view>
+        </view>
+        <text class="go-arrow">›</text>
+      </view>
+      <view class="cat-bar"><view class="cat-bar-fill" style="width:{{item.barWidth}}%"></view></view>
+    </view>
+  </view>
+
+  <view class="foot-note">数据：领星 + 金蝶财务（duoqubao-api 静态快照 {{generatedAt}}）· 盈亏/回款/采购/费用全期累计 · ⚠️ 采购/弹药含多代款（款混）偏高 · opex 类聚合（型号变体偏漏）</view>
+  </block>
+</view>

@@ -1,0 +1,18 @@
+.fd { position: relative; }
+.fd-btn {
+  font-size: 22rpx; color: #94a3c4;
+  border: 1rpx solid #2c3a5c; border-radius: 10rpx;
+  padding: 8rpx 18rpx; background: #0f1729;
+}
+.fd-arrow { font-size: 18rpx; }
+.fd-mask {
+  position: fixed; left: 0; top: 0; right: 0; bottom: 0; z-index: 9;
+}
+.fd-menu {
+  position: absolute; right: 0; top: 100%; margin-top: 10rpx;
+  background: #1f2c4a; border: 1rpx solid #2c3a5c; border-radius: 14rpx;
+  z-index: 10; min-width: 180rpx; overflow: hidden;
+  box-shadow: 0 8rpx 24rpx rgba(0,0,0,.35);
+}
+.fd-item { font-size: 24rpx; padding: 18rpx 28rpx; color: #cdd6ec; }
+.fd-item-on { color: #5b8cff; background: rgba(91,140,255,.12); }

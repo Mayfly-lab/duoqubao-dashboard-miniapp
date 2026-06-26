@@ -1,93 +1,114 @@
-const MOCK = require('../../data/finance_mock.js')
-const { ROLE_ORDER, ROLE_LABEL, getRole, setRole } = require('../../utils/role.js')
+// 老板总览(个人工具·只老板视角):全公司整体盈亏 + 产品类对比(折叠/筛选) + 待关注(折叠/筛选)。
+const api = require('../../utils/api.js')
+const { groupByCategory } = require('../../utils/aggregate.js')
 const { detect } = require('../../utils/alerts.js')
 
+const ALERT_FILTERS = [
+  { label: '全部', value: 'all' }, { label: '亏损', value: '亏损' },
+  { label: '低毛利', value: '低毛利' }, { label: 'ACOS高', value: 'ACOS高' },
+]
+const CAT_FILTERS = [
+  { label: '全部', value: 'all' }, { label: '盈利', value: 'profit' }, { label: '亏损', value: 'loss' },
+]
+
 function fmtMoney(n) {
-  const v = Math.round(n)
-  return (v < 0 ? '-$' : '$') + Math.abs(v).toLocaleString('en-US')
+  const a = Math.abs(n), s = n < 0 ? '-$' : '$'
+  if (a >= 1e6) return s + (a / 1e6).toFixed(2) + 'M'
+  if (a >= 1e3) return s + (a / 1e3).toFixed(1) + 'k'
+  return s + Math.round(a)
 }
 
 Page({
   data: {
-    role: 'boss',
-    roleOrder: ROLE_ORDER,
-    roleLabel: ROLE_LABEL,
-    roleName: '',
-    generatedAt: MOCK.generated_at,
-    rangeDays: MOCK.range_days,
+    generatedAt: api.generatedAt,
     kpi: {},
-    projects: [],
-    alerts: [],
-    expanded: '',
-    costs: [],
+    alerts: [], alertTotal: 0, alertFilter: 'all', alertFilters: ALERT_FILTERS, showAllAlerts: false,
+    categories: [], catTotal: 0, catFilter: 'all', catFilters: CAT_FILTERS, showAllCats: false, expandedLine: '',
+    loading: true, error: '',
+    rawProducts: [], _payback: [], rawCategories: [], rawAlerts: [],
   },
 
-  onShow() {
-    // 每次显示同步全局角色，保证与团队看板联动
-    this.applyRole(getRole())
+  onLoad() { this.fetch() },
+  onShow() { if (this.data.rawProducts.length) this.render() },
+
+  async fetch() {
+    this.setData({ loading: true, error: '' })
+    try {
+      const [rows, plist, payback] = await Promise.all([
+        api.projectsCompare(), api.projectsList(), api.dash('payback'),
+      ])
+      const skuMap = {}
+      plist.forEach(p => { skuMap[p.local_name] = p.sku_count })
+      const raw = rows.map(p => ({
+        local_name: p.local_name,
+        sales: api.num(p.sales), profit: api.num(p.profit), ad_cost: api.num(p.ad_cost),
+        margin_pct: api.num(p.margin_pct), acos_pct: api.num(p.acos_pct),
+        sku_count: skuMap[p.local_name] || '',
+      }))
+      this.setData({ rawProducts: raw, _payback: payback, loading: false })
+      this.render()
+    } catch (e) {
+      this.setData({ loading: false, error: '数据加载失败：' + (e.message || e) })
+      wx.showToast({ title: '加载失败', icon: 'none' })
+    }
   },
 
-  onRoleTap(e) {
-    const role = e.currentTarget.dataset.role
-    setRole(role)
-    this.applyRole(role)
-  },
-
-  applyRole(role) {
-    const conf = MOCK.roles[role]
-    const visible = conf.visible
-    let list = MOCK.projects
-    if (visible !== 'all') list = list.filter(p => visible.includes(p.local_name))
-
+  render() {
+    const list = this.data.rawProducts
     const sales = list.reduce((s, p) => s + p.sales, 0)
     const profit = list.reduce((s, p) => s + p.profit, 0)
     const adCost = list.reduce((s, p) => s + p.ad_cost, 0)
     const kpi = {
-      projectCount: list.length,
-      sales: fmtMoney(sales),
-      profit: fmtMoney(profit),
+      sales: fmtMoney(sales), profit: fmtMoney(profit),
       marginPct: sales ? (profit / sales * 100).toFixed(1) : '0.0',
       acosPct: sales ? (adCost / sales * 100).toFixed(1) : '0.0',
     }
-    const projects = list.map(p => ({
-      ...p,
-      salesText: fmtMoney(p.sales),
-      profitText: fmtMoney(p.profit),
-      adCostText: fmtMoney(p.ad_cost),
-      ownersText: (p.owners || []).join('、'),
-      loss: p.profit < 0,
-      barWidth: list.length ? Math.max(4, Math.round(p.sales / list[0].sales * 100)) : 0,
+    const cats = groupByCategory(list, this.data._payback)
+    const top = cats.length ? Math.max(...cats.map(c => c.sales)) : 1
+    const rawCategories = cats.map(c => ({
+      line: c.line, count: c.count, sales: c.sales, profit: c.profit,
+      salesText: fmtMoney(c.sales), profitText: fmtMoney(c.profit),
+      marginPct: c.margin_pct.toFixed(1),
+      realizedText: fmtMoney(c.realized), pendingText: fmtMoney(c.pending),
+      loss: c.profit < 0,
+      barWidth: Math.max(4, Math.round(c.sales / top * 100)),
     }))
-    this.setData({
-      role, roleName: conf.name, kpi, projects,
-      alerts: detect(list),
-      expanded: '', costs: [],
-    })
+    const rawAlerts = detect(list)
+    this.setData({ kpi, rawCategories, rawAlerts, expandedLine: '' })
+    this.renderAlerts()
+    this.renderCats()
   },
 
-  onProjectTap(e) {
-    const name = e.currentTarget.dataset.name
-    if (this.data.expanded === name) {
-      this.setData({ expanded: '', costs: [] })
-      return
-    }
-    const raw = MOCK.costs[name] || []
-    const max = raw.reduce((m, c) => Math.max(m, c.cost), 0) || 1
-    const costs = raw.map(c => ({
-      ...c,
-      costText: fmtMoney(c.cost),
-      barWidth: Math.max(6, Math.round(c.cost / max * 100)),
-    }))
-    this.setData({ expanded: name, costs })
+  // ── 待关注:筛选 + 折叠 ──
+  renderAlerts() {
+    const f = this.data.alertFilter
+    let list = this.data.rawAlerts
+    if (f !== 'all') list = list.filter(a => a.tag === f)
+    const shown = this.data.showAllAlerts ? list : list.slice(0, 3)
+    this.setData({ alerts: shown, alertTotal: list.length })
   },
+  onAlertFilterChange(e) { this.setData({ alertFilter: e.detail.value, showAllAlerts: false }, () => this.renderAlerts()) },
+  onToggleAlerts() { this.setData({ showAllAlerts: !this.data.showAllAlerts }, () => this.renderAlerts()) },
+  onAlertTap(e) { wx.navigateTo({ url: '/pages/project/project?name=' + encodeURIComponent(e.currentTarget.dataset.name) }) },
 
-  onAlertTap(e) {
-    const name = e.currentTarget.dataset.name
-    wx.navigateTo({ url: '/pages/project/project?name=' + encodeURIComponent(name) })
+  // ── 产品类:筛选 + 折叠 + 展开 ──
+  renderCats() {
+    const f = this.data.catFilter
+    let list = this.data.rawCategories
+    if (f === 'profit') list = list.filter(c => !c.loss)
+    else if (f === 'loss') list = list.filter(c => c.loss)
+    const total = list.length
+    let shown = this.data.showAllCats ? list : list.slice(0, 8)
+    shown = shown.map(c => ({ ...c, expanded: c.line === this.data.expandedLine }))
+    this.setData({ categories: shown, catTotal: total })
   },
-
-  onDetailTap(e) {
-    const name = e.currentTarget.dataset.name
-    wx.navigateTo({ url: '/pages/project/project?name=' + encodeURIComponent(name) })
+  onCatFilterChange(e) { this.setData({ catFilter: e.detail.value, showAllCats: false, expandedLine: '' }, () => this.renderCats()) },
+  onToggleCats() { this.setData({ showAllCats: !this.data.showAllCats }, () => this.renderCats()) },
+  onCatTap(e) {
+    const line = e.currentTarget.dataset.line
+    this.setData({ expandedLine: this.data.expandedLine === line ? '' : line }, () => this.renderCats())
+  },
+  onEnterCategory(e) {
+    wx.navigateTo({ url: '/pages/category/category?line=' + encodeURIComponent(e.currentTarget.dataset.line) })
   },
 })
