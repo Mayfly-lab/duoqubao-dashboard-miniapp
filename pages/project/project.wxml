@@ -24,7 +24,7 @@
 
   <!-- 采购(金蝶·本型号 2026款·链路一致) -->
   <view wx:if="{{procurement}}" class="card">
-    <view class="card-title">采购（金蝶 · 本型号 2026款）</view>
+    <view class="card-title">采购（金蝶 · 本型号活跃代）</view>
     <view class="ph-grid">
       <view class="ph-item"><view class="ph-num">{{procurement.amountText}}</view><view class="ph-lab">采购额 · {{procurement.qty}}台</view></view>
       <view class="ph-item"><view class="ph-num text-green">{{procurement.paidText}}</view><view class="ph-lab">已付</view></view>

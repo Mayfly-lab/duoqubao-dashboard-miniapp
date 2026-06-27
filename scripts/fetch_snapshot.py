@@ -34,10 +34,11 @@ def main():
         snap[key] = get("/dashboard/" + ep, {"name": ""})
         print(f"  {ep}: {len(snap[key])} 行", flush=True)
 
-    # 采购按当年款收口(治款混):全期采购含 24/25 旧款,但领星回款 2025-06 才有数据(旧款回款=0),
-    # 全期采购÷"全期"回款会被旧款单方面稀释。按 PROC_YEAR 限款,两侧同代,回本率才成立(对齐 demo 2026款)。
-    snap["procurement"] = get("/dashboard/procurement", {"name": "", "year": PROC_YEAR})
-    print(f"  procurement(year={PROC_YEAR}): {len(snap['procurement'])} 行", flush=True)
+    # 采购明细(全量·带 PID×采购年份):前端按"每条线活跃代年份(采购额最大年)"逐线收口,
+    # 治款混又不打骨折——空调活跃代=2026,保险箱=2025,猫砂盆=2024…各线不同,不能全局卡一年。
+    # (全期采购含多代,但领星回款只覆盖当前在卖代;取活跃代采购,两侧同代,回本率才成立。)
+    snap["procurement"] = get("/dashboard/procurement_detail", {"name": ""})
+    print(f"  procurement_detail(全量·带年份): {len(snap['procurement'])} 行", flush=True)
 
     snap["opex_company"] = get("/dashboard/opex", {"name": ""})
     print(f"  opex(公司级): {len(snap['opex_company'])} 行", flush=True)

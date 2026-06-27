@@ -14,7 +14,7 @@ const fmtShort = n => { const a = Math.abs(n); if (a >= 1e6) return (n < 0 ? '-'
 
 Page({
   data: {
-    line: '', generatedAt: api.generatedAt, kpi: {}, level0: null, four: null, settle: null, models: [],
+    line: '', generatedAt: api.generatedAt, kpi: {}, level0: null, four: null, settle: null, models: [], unmappedText: '',
     timeline: [], fees: [], ads: null, refund: null, inventory: null, stars: [], opex: [],
     loading: true, error: '',
   },
@@ -81,7 +81,7 @@ Page({
 
       // ── L0 双进度条(对齐 demo §2.2 口径,统一 CNY) ──
       // 投入 = 采购合同全额(含税·amount) + 头程(¥15/台估) + 运营opex;回款 = 已到账(realized) + 在途(pending)。
-      // 回本率 = (已到账+在途) / 全投入。采购已在快照层按 2026 款收口(fetch_snapshot PROC_YEAR),两侧同代。
+      // 回本率 = (已到账+在途) / 全投入。采购取本线「活跃代年份」(采购额最大年),与回款同代,治款混不打骨折。
       const proc = procurementOf(procurement, line)
       const headFreight = proc.qty * HEAD_FREIGHT_PER_UNIT * FX
       const realizedCny = realized * FX, pendingCny = pending * FX
@@ -102,6 +102,7 @@ Page({
           { label: '在途待回', val: fmtWan(pendingCny), w: seg(pendingCny), cls: 'seg-pending' },
         ],
         owe: fmtWan(proc.outstanding),   // 欠厂应付(账期红利,提示用)
+        buyYear: proc.year || '—',       // 活跃代年份
       }
 
       // ── L1 四问(对齐 demo:① 钱→货 ② 货→费用 ③ 卖→回款 ④ 收回vs付出) ──
@@ -131,6 +132,9 @@ Page({
         name: u.jdName, salesText: '—', profitText: '—', marginPct: '—', loss: false,
         barWidth: 2, buyText: fmtWan(u.amount), unstocked: true,
       }))
+      // 类级未拆采购(B类:金蝶笼统名拆不到型号),单列保证 Σ型号采购 + 未拆 = 类采购
+      const unmapped = procByModel._unmapped
+      const unmappedText = (unmapped && unmapped.amount > 0) ? fmtWan(unmapped.amount) : ''
 
       // 时间轴
       const tlMap = {}
@@ -169,7 +173,7 @@ Page({
         .map(s => ({ asin: s.asin, star: s.star, reviews: s.reviews, low: N(s.star) < 3.5 }))
         .sort((a, b) => N(a.star) - N(b.star))
 
-      this.setData({ kpi, level0, four, settle, models, timeline, fees, ads, refund, inventory: inv, stars, opex, loading: false })
+      this.setData({ kpi, level0, four, settle, models, unmappedText, timeline, fees, ads, refund, inventory: inv, stars, opex, loading: false })
     } catch (e) {
       this.setData({ loading: false, error: '加载失败：' + (e.message || e) })
     }

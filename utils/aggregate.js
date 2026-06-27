@@ -38,16 +38,27 @@ function groupByCategory(compareRows, paybackRows) {
 // line → 采购产品名关键词(默认=line,少数 line 名与采购口径不一致的 override)
 const LINE_KW = { '电动猫砂盆': '猫砂盆', '骨传导耳机': '骨传导', '翻译耳机': '翻译' }
 
-// 按 line 关键词匹配 procurement(财务采购,by 财务产品名),加总采购/已付/欠厂/台数
-function procurementOf(procRows, line) {
+// 逐线「活跃代」:采购明细(带 buy_year)→ 取采购额最大的那年(当前主力备货代)的行。
+// 治款混又不打骨折:空调活跃代=2026,保险箱=2025,猫砂盆=2024…各线按自己的备货年,不全局卡一年。
+function activeYearRows(detailRows, line) {
   const kw = LINE_KW[line] || line
-  const m = (procRows || []).filter(p => (p.product || '').includes(kw))
+  const rows = (detailRows || []).filter(p => (p.product || '').includes(kw))
+  const byYear = {}
+  rows.forEach(r => { const y = String(r.buy_year); byYear[y] = (byYear[y] || 0) + num(r.amount) })
+  let year = null, best = -Infinity
+  Object.keys(byYear).forEach(y => { if (y !== 'null' && y !== 'undefined' && byYear[y] > best) { best = byYear[y]; year = y } })
+  return { year, rows: rows.filter(r => String(r.buy_year) === year) }
+}
+
+// 活跃代采购合计(类级):加总采购/已付/欠厂/台数 + 活跃代年份
+function procurementOf(detailRows, line) {
+  const { year, rows } = activeYearRows(detailRows, line)
   return {
-    count: m.length,
-    amount: m.reduce((s, p) => s + num(p.amount), 0),
-    paid: m.reduce((s, p) => s + num(p.paid), 0),
-    outstanding: m.reduce((s, p) => s + num(p.outstanding), 0),
-    qty: m.reduce((s, p) => s + num(p.qty), 0),
+    year, count: rows.length,
+    amount: rows.reduce((s, p) => s + num(p.amount), 0),
+    paid: rows.reduce((s, p) => s + num(p.paid), 0),
+    outstanding: rows.reduce((s, p) => s + num(p.outstanding), 0),
+    qty: rows.reduce((s, p) => s + num(p.qty), 0),
   }
 }
 
@@ -63,25 +74,22 @@ function settleView(sales, fee) {
   return { sales: num(sales), items, deduct, net: num(sales) - deduct }
 }
 
-// 把某 line 的金蝶采购行,按 model_map 拆到「型号级」:
+// 把某 line「活跃代」的金蝶采购行,按 model_map 拆到「型号级」:
 //   byModel[领星local_name] = {amount,paid,outstanding,qty}  (matched,挂到在售型号)
-//   unstocked[] = {jdName, amount,paid,outstanding,qty}        (未铺货新款,领星无对应)
-// 未在 model_map 的金蝶名:计入 byModel['_unmapped'](型号级拆不了,仍进类合计,不单列型号)。
-function procurementByModel(procRows, line) {
-  const kw = LINE_KW[line] || line
-  const m = (procRows || []).filter(p => (p.product || '').includes(kw))
-  const byModel = {}, unstocked = []
-  const add = (bucket, p) => {
-    bucket.amount += num(p.amount); bucket.paid += num(p.paid)
-    bucket.outstanding += num(p.outstanding); bucket.qty += num(p.qty)
-  }
+//   byModel['_unmapped']    = 笼统名拆不到型号的(B类),类级未拆,前端单列提示
+//   unstocked[]             = 未铺货新款(model_map 值=null,领星无对应),型号列表单列
+function procurementByModel(detailRows, line) {
+  const { rows } = activeYearRows(detailRows, line)
+  const byModel = {}, unstockedMap = {}
   const blank = () => ({ amount: 0, paid: 0, outstanding: 0, qty: 0 })
-  m.forEach(p => {
+  const add = (b, p) => { b.amount += num(p.amount); b.paid += num(p.paid); b.outstanding += num(p.outstanding); b.qty += num(p.qty) }
+  rows.forEach(p => {
     const has = Object.prototype.hasOwnProperty.call(MODEL_MAP, p.product)
     const lx = has ? MODEL_MAP[p.product] : '_unmapped'
-    if (lx === null) { unstocked.push({ jdName: p.product, ...blank(), amount: num(p.amount), paid: num(p.paid), outstanding: num(p.outstanding), qty: num(p.qty) }) }
+    if (lx === null) { (unstockedMap[p.product] || (unstockedMap[p.product] = blank())); add(unstockedMap[p.product], p) }
     else { (byModel[lx] || (byModel[lx] = blank())); add(byModel[lx], p) }
   })
+  const unstocked = Object.entries(unstockedMap).map(([jdName, v]) => ({ jdName, ...v }))
   return { byModel, unstocked }
 }
 

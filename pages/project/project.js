@@ -2,8 +2,7 @@
 // 财务走快照;归属/asin 走 registry。opex 型号级偏漏(标注)。
 const api = require('../../utils/api.js')
 const registry = require('../../data/registry.js')
-const { lineOf, settleView } = require('../../utils/aggregate.js')
-const MODEL_MAP = require('../../data/model_map.js')
+const { lineOf, settleView, procurementByModel } = require('../../utils/aggregate.js')
 
 function fmtMoney(n) { const a = Math.abs(n), s = n < 0 ? '-$' : '$'; if (a >= 1e6) return s + (a / 1e6).toFixed(2) + 'M'; if (a >= 1e3) return s + (a / 1e3).toFixed(1) + 'k'; return s + Math.round(a) }
 const fmtCny = n => { const a = Math.abs(n); if (a >= 1e8) return '¥' + (a / 1e8).toFixed(2) + '亿'; if (a >= 1e4) return '¥' + (a / 1e4).toFixed(1) + '万'; return '¥' + Math.round(a) }
@@ -38,14 +37,11 @@ Page({
       const reg = registry.byProduct[name] || null
       const N = api.num
 
-      // 该型号采购(金蝶):按 model_map 反查归到本 local_name 的采购合同(链路一致:型号也带采购)
-      const buyRows = (procAll || []).filter(p => MODEL_MAP[p.product] === name)
-      const buyAmount = buyRows.reduce((s, p) => s + N(p.amount), 0)
-      const buyQty = buyRows.reduce((s, p) => s + N(p.qty), 0)
-      const procurementCard = buyAmount > 0 ? {
-        amountText: fmtCny(buyAmount), qty: buyQty.toLocaleString('en-US'),
-        paidText: fmtCny(buyRows.reduce((s, p) => s + N(p.paid), 0)),
-        oweText: fmtCny(buyRows.reduce((s, p) => s + N(p.outstanding), 0)),
+      // 该型号采购(金蝶·活跃代):复用 procurementByModel(逐线活跃代+model_map),取本型号那份,与类页一致
+      const pm = procurementByModel(procAll, lineOf(name)).byModel[name]
+      const procurementCard = (pm && pm.amount > 0) ? {
+        amountText: fmtCny(pm.amount), qty: pm.qty.toLocaleString('en-US'),
+        paidText: fmtCny(pm.paid), oweText: fmtCny(pm.outstanding),
       } : null
 
       // 头部:近 30 天汇总

@@ -18,7 +18,7 @@
   <!-- L0 双进度条 -->
   <view wx:if="{{level0}}" class="card">
     <view class="card-title">回本进度 · 锁定 {{level0.lockPct}}%</view>
-    <view class="card-hint">上=全投入 {{level0.investText}} / 下=回款 {{level0.backText}}（已到账+在途·同比例尺·¥）· 采购已按 2026 款收口（治款混）· 头程按台数估 · opex 类聚合偏漏</view>
+    <view class="card-hint">上=全投入 {{level0.investText}} / 下=回款 {{level0.backText}}（已到账+在途·同比例尺·¥）· 采购取活跃代 {{level0.buyYear}} 年（治款混·与回款同代）· 头程按台数估 · opex 类聚合偏漏</view>
     <view class="prog">
       <view wx:for="{{level0.investSegs}}" wx:key="label" class="prog-seg {{item.cls}}" style="width:{{item.w}}%"></view>
     </view>
@@ -169,8 +169,9 @@
       </view>
       <view class="cat-bar"><view class="cat-bar-fill" style="width:{{item.barWidth}}%"></view></view>
     </view>
+    <view wx:if="{{unmappedText}}" class="future-line">类级未拆采购 {{unmappedText}}（金蝶按笼统名记账，拆不到具体型号）· Σ型号采购 + 未拆 = 类采购</view>
   </view>
 
-  <view class="foot-note">数据：领星 + 金蝶财务（duoqubao-api 静态快照 {{generatedAt}}）· 销售/回款全期（领星 2025-06 硬地板≈当年款）· 采购按 2026 款收口（治款混）· opex 类聚合（型号变体偏漏）</view>
+  <view class="foot-note">数据：领星 + 金蝶财务（duoqubao-api 静态快照 {{generatedAt}}）· 销售/回款全期（领星 2025-06 硬地板≈当年款）· 采购取活跃代年份（治款混·与回款同代）· opex 类聚合（型号变体偏漏）</view>
   </block>
 </view>
