@@ -158,3 +158,9 @@
   text-align: center; font-size: 26rpx; color: #fff; font-weight: 600;
   background: #5b8cff; border-radius: 14rpx; padding: 20rpx 0; margin-top: 20rpx;
 }
+
+/* 净利单行(币种与上方 KPI 不同,独立展示) */
+.net-line { margin-top: 16rpx; padding: 16rpx 20rpx; background: rgba(255,255,255,.03); border-radius: 12rpx; display: flex; flex-wrap: wrap; align-items: baseline; gap: 8rpx 14rpx; }
+.net-key { font-size: 26rpx; color: #9aa4b2; }
+.net-val { font-size: 38rpx; font-weight: 700; }
+.net-note { width: 100%; font-size: 20rpx; color: #6b7280; line-height: 1.5; }

@@ -84,3 +84,21 @@
 .q-r { font-size: 22rpx; color: #cbd5e1; margin-top: 6rpx; }
 
 .foot-note { text-align: center; font-size: 20rpx; color: #6b7280; margin-top: 32rpx; }
+
+/* 未来现金提示行(不进回收率) */
+.future-line { margin-top: 14rpx; font-size: 22rpx; color: #8a93a0; line-height: 1.5; }
+
+/* 结算视角:到手 = 销售 − 各项 */
+.settle-row { display: flex; align-items: center; gap: 14rpx; padding: 10rpx 0; }
+.settle-name { width: 150rpx; font-size: 26rpx; color: #c2c9d2; flex-shrink: 0; }
+.settle-bar { flex: 1; height: 14rpx; background: rgba(255,255,255,.06); border-radius: 7rpx; overflow: hidden; }
+.settle-bar-fill { height: 100%; background: #f06292; border-radius: 7rpx; }
+.settle-val { width: 150rpx; text-align: right; font-size: 26rpx; flex-shrink: 0; }
+.settle-top { border-bottom: 1rpx solid rgba(255,255,255,.08); }
+.settle-net { margin-top: 6rpx; border-top: 1rpx solid rgba(255,255,255,.12); font-weight: 700; }
+.settle-net .settle-name, .settle-net .settle-val { font-size: 30rpx; }
+
+/* 未铺货型号:有采购无销售 */
+.badge-unstocked { display:inline-block; margin-left:10rpx; padding:2rpx 10rpx; font-size:20rpx; color:#b08900; background:rgba(245,165,36,.15); border-radius:6rpx; vertical-align:middle; }
+.cat-unstocked { opacity:.72; }
+.text-mut { color:#8a93a0; }

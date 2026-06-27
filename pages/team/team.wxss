@@ -16,24 +16,21 @@
 .person { padding: 16rpx 0; border-bottom: 1rpx solid #1a2438; }
 .person:last-child { border-bottom: none; }
 .person-head { display: flex; justify-content: space-between; align-items: center; }
+.person-left { flex: 1; min-width: 0; }
 .person-name { font-size: 28rpx; font-weight: 600; color: #eef2fb; }
 .person-arrow { font-size: 20rpx; color: #94a3c4; }
-.person-right { text-align: right; }
-.person-contrib { font-size: 24rpx; }
-.person-opex { font-size: 20rpx; color: #8b5cf6; margin-top: 4rpx; }
-
-/* 个人:产品 + 费用动作 */
-.person-detail { margin-top: 14rpx; padding: 16rpx; background: #0f1729; border-radius: 14rpx; }
-.prod-block { padding: 12rpx 0; border-top: 1rpx solid #1a2438; }
-.prod-block:first-child { border-top: none; }
-.prod-row { display: flex; justify-content: space-between; align-items: center; }
-.prod-name { font-size: 24rpx; color: #cbd5e1; flex: 1; }
-.prod-role { font-size: 18rpx; color: #94a3c4; border: 1rpx solid #2c3a5c; border-radius: 6rpx; padding: 0 8rpx; margin-left: 10rpx; }
-.prod-val { font-size: 22rpx; }
-.prod-acts { padding: 4rpx 0 0 20rpx; }
-.act-row { display: flex; justify-content: space-between; padding: 6rpx 0; }
-.act-name { font-size: 22rpx; color: #94a3c4; flex: 1; }
-.act-val { font-size: 22rpx; color: #8b5cf6; }
-.empty-mini { font-size: 22rpx; color: #6b7280; padding: 6rpx 0 6rpx 20rpx; }
+.person-badges { margin-top: 6rpx; }
+.badge { font-size: 18rpx; border-radius: 6rpx; padding: 2rpx 10rpx; margin-right: 8rpx; }
+.badge-own { color: #5b8cff; background: rgba(91,140,255,.14); }
+.badge-join { color: #94a3c4; background: rgba(148,163,196,.12); }
+/* 个人:负责产品清单 */
+.person-detail { margin-top: 14rpx; padding: 8rpx 16rpx; background: #0f1729; border-radius: 14rpx; }
+.prod-row { display: flex; justify-content: space-between; align-items: center; padding: 12rpx 0; border-top: 1rpx solid #1a2438; }
+.prod-row:first-child { border-top: none; }
+.prod-name { font-size: 24rpx; color: #cbd5e1; flex: 1; min-width: 0; }
+.prod-role { font-size: 18rpx; border-radius: 6rpx; padding: 0 8rpx; margin-left: 10rpx; flex-shrink: 0; }
+.role-own { color: #5b8cff; background: rgba(91,140,255,.14); }
+.role-join { color: #94a3c4; background: rgba(148,163,196,.12); }
+.prod-val { font-size: 22rpx; color: #eef2fb; flex-shrink: 0; }
 
 .foot-note { text-align: center; font-size: 20rpx; color: #6b7280; margin-top: 32rpx; }

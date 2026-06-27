@@ -5,7 +5,7 @@
   <block wx:if="{{!loading && !error}}">
   <!-- 类整体 + 回款 -->
   <view class="card">
-    <view class="cat-title">{{line}}<text class="cat-tag">{{kpi.count}} 型号</text></view>
+    <view class="cat-title">{{line}}<text class="cat-tag">{{models.length}} 型号</text></view>
     <view class="ph-grid">
       <view class="ph-item"><view class="ph-num text-blue">{{kpi.salesText}}</view><view class="ph-lab">销售额</view></view>
       <view class="ph-item"><view class="ph-num {{kpi.loss ? 'text-pink' : 'text-green'}}">{{kpi.profitText}}</view><view class="ph-lab">毛利 {{kpi.marginPct}}%</view></view>
@@ -17,7 +17,7 @@
   <!-- L0 双进度条 -->
   <view wx:if="{{level0}}" class="card">
     <view class="card-title">回本进度 · 锁定 {{level0.lockPct}}%</view>
-    <view class="card-hint">上=投入 {{level0.investText}} / 下=回款 {{level0.backText}}（同比例尺·¥）⚠️ 全期累计·含多代款(款混),非 2026 款口径;头程按采购台数估偏高</view>
+    <view class="card-hint">上=全投入 {{level0.investText}} / 下=回款 {{level0.backText}}（已到账+在途·同比例尺·¥）· 采购已按 2026 款收口（治款混）· 头程按台数估 · opex 类聚合偏漏</view>
     <view class="prog">
       <view wx:for="{{level0.investSegs}}" wx:key="label" class="prog-seg {{item.cls}}" style="width:{{item.w}}%"></view>
     </view>
@@ -30,6 +30,7 @@
     <view class="prog-legend">
       <view wx:for="{{level0.backSegs}}" wx:key="label" class="lg"><text class="dot {{item.cls}}"></text>{{item.label}} {{item.val}}</view>
     </view>
+    <view class="future-line">账期红利：欠厂 {{level0.owe}} 未付 · 可用回款滚动付尾款</view>
   </view>
 
   <!-- L1 四问 -->
@@ -52,9 +53,9 @@
         <view class="q-r">已到账 <text class="text-green">{{four.q3.realized}}</text></view>
       </view>
       <view class="q-card">
-        <view class="q-t">④ 盈余</view>
-        <view class="q-r">投入 {{four.q4.invest}} · 锁定 {{four.q4.locked}}</view>
-        <view class="q-r">超额 <text class="{{four.q4.overPos ? 'text-green' : 'text-pink'}}">{{four.q4.over}}</text></view>
+        <view class="q-t">④ 收回 vs 付出</view>
+        <view class="q-r">投入 {{four.q4.invest}} · 回款 {{four.q4.locked}}</view>
+        <view class="q-r">盈余 <text class="{{four.q4.overPos ? 'text-green' : 'text-pink'}}">{{four.q4.over}}</text></view>
       </view>
     </view>
   </view>
@@ -99,6 +100,25 @@
     </view>
   </view>
 
+  <!-- 亚马逊结算视角:到手 = 销售 − 各项(对齐 mockup) -->
+  <view wx:if="{{settle}}" class="card">
+    <view class="card-title">结算视角 · 到手 {{settle.netText}}（{{settle.netPct}}%）</view>
+    <view class="card-hint">全期·USD ⚠️ 平台结算后 ≠ 毛利（未扣采购成本 COGS,口径不同于上方 KPI 毛利）</view>
+    <view class="settle-row settle-top">
+      <view class="settle-name">销售额</view>
+      <view class="settle-val text-green">{{settle.salesText}}</view>
+    </view>
+    <view wx:for="{{settle.items}}" wx:key="label" class="settle-row">
+      <view class="settle-name">− {{item.label}}</view>
+      <view class="settle-bar"><view class="settle-bar-fill" style="width:{{item.w}}%"></view></view>
+      <view class="settle-val text-pink">{{item.valText}}</view>
+    </view>
+    <view class="settle-row settle-net">
+      <view class="settle-name">= 到手</view>
+      <view class="settle-val {{settle.netLoss ? 'text-pink' : 'text-green'}}">{{settle.netText}}</view>
+    </view>
+  </view>
+
   <!-- 费用扣除 -->
   <view wx:if="{{fees.length}}" class="card">
     <view class="card-title">费用扣除（平台）</view>
@@ -131,17 +151,18 @@
 
   <!-- 型号列表 -->
   <view class="card">
-    <view class="card-title">型号（{{kpi.count}}）</view>
-    <view class="card-hint">👆 点任意型号 → 进入该型号详细看板</view>
+    <view class="card-title">型号（{{models.length}}）</view>
+    <view class="card-hint">👆 点任意型号 → 进入该型号详细看板（未铺货款仅采购、暂无销售看板）</view>
     <view
       wx:for="{{models}}" wx:key="name"
-      class="cat cat-click {{item.loss ? 'cat-loss' : ''}}"
-      data-name="{{item.name}}" bindtap="onModelTap">
+      class="cat {{item.unstocked ? 'cat-unstocked' : 'cat-click'}} {{item.loss ? 'cat-loss' : ''}}"
+      data-name="{{item.name}}" bindtap="{{item.unstocked ? '' : 'onModelTap'}}">
       <view class="cat-head">
-        <view class="cat-name">{{item.name}}</view>
+        <view class="cat-name">{{item.name}}<text wx:if="{{item.unstocked}}" class="badge-unstocked">未铺货</text></view>
         <view class="cat-right">
           <view class="cat-sales">{{item.salesText}}</view>
-          <view class="cat-sub {{item.loss ? 'text-pink' : 'text-green'}}">毛利 {{item.profitText}} · {{item.marginPct}}%</view>
+          <view wx:if="{{!item.unstocked}}" class="cat-sub {{item.loss ? 'text-pink' : 'text-green'}}">毛利 {{item.profitText}} · {{item.marginPct}}%</view>
+          <view wx:else class="cat-sub text-mut">采购 {{item.buyText}} · 待铺货</view>
         </view>
         <text class="go-arrow">›</text>
       </view>
@@ -149,6 +170,6 @@
     </view>
   </view>
 
-  <view class="foot-note">数据：领星 + 金蝶财务（duoqubao-api 静态快照 {{generatedAt}}）· 盈亏/回款/采购/费用全期累计 · ⚠️ 采购/弹药含多代款（款混）偏高 · opex 类聚合（型号变体偏漏）</view>
+  <view class="foot-note">数据：领星 + 金蝶财务（duoqubao-api 静态快照 {{generatedAt}}）· 销售/回款全期（领星 2025-06 硬地板≈当年款）· 采购按 2026 款收口（治款混）· opex 类聚合（型号变体偏漏）</view>
   </block>
 </view>

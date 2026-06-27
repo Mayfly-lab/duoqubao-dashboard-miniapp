@@ -1,5 +1,6 @@
 // 产品类聚合:按 registry「产品主线」(line)把型号(local_name)加总成类。
 const registry = require('../data/registry.js')
+const MODEL_MAP = require('../data/model_map.js')
 
 const num = v => parseFloat(v) || 0
 const lineOf = name => (registry.byProduct[name] || {}).line || '其他'
@@ -50,4 +51,38 @@ function procurementOf(procRows, line) {
   }
 }
 
-module.exports = { groupByCategory, lineOf, num, procurementOf, LINE_KW }
+// 亚马逊结算视角(对齐 mockup):到手 = 销售 − 佣金 − FBA − 广告 − 仓储 − 退款。
+// 全 USD 单币种;⚠️ 这是「平台结算后」≠ 毛利(领星毛利还扣了采购成本 COGS,口径不同,勿与 KPI 毛利混)。
+// fee 形如 {commission,fba_delivery,ads_cost,storage,refunds}(可正可负,这里统一取绝对值)。
+function settleView(sales, fee) {
+  const items = [
+    ['佣金', fee.commission], ['FBA 配送', fee.fba_delivery], ['广告', fee.ads_cost],
+    ['仓储', fee.storage], ['退款', fee.refunds],
+  ].map(([label, v]) => ({ label, val: Math.abs(num(v)) })).filter(i => i.val > 0)
+  const deduct = items.reduce((s, i) => s + i.val, 0)
+  return { sales: num(sales), items, deduct, net: num(sales) - deduct }
+}
+
+// 把某 line 的金蝶采购行,按 model_map 拆到「型号级」:
+//   byModel[领星local_name] = {amount,paid,outstanding,qty}  (matched,挂到在售型号)
+//   unstocked[] = {jdName, amount,paid,outstanding,qty}        (未铺货新款,领星无对应)
+// 未在 model_map 的金蝶名:计入 byModel['_unmapped'](型号级拆不了,仍进类合计,不单列型号)。
+function procurementByModel(procRows, line) {
+  const kw = LINE_KW[line] || line
+  const m = (procRows || []).filter(p => (p.product || '').includes(kw))
+  const byModel = {}, unstocked = []
+  const add = (bucket, p) => {
+    bucket.amount += num(p.amount); bucket.paid += num(p.paid)
+    bucket.outstanding += num(p.outstanding); bucket.qty += num(p.qty)
+  }
+  const blank = () => ({ amount: 0, paid: 0, outstanding: 0, qty: 0 })
+  m.forEach(p => {
+    const has = Object.prototype.hasOwnProperty.call(MODEL_MAP, p.product)
+    const lx = has ? MODEL_MAP[p.product] : '_unmapped'
+    if (lx === null) { unstocked.push({ jdName: p.product, ...blank(), amount: num(p.amount), paid: num(p.paid), outstanding: num(p.outstanding), qty: num(p.qty) }) }
+    else { (byModel[lx] || (byModel[lx] = blank())); add(byModel[lx], p) }
+  })
+  return { byModel, unstocked }
+}
+
+module.exports = { groupByCategory, lineOf, num, procurementOf, procurementByModel, LINE_KW, settleView }

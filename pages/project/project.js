@@ -2,7 +2,8 @@
 // 财务走快照;归属/asin 走 registry。opex 型号级偏漏(标注)。
 const api = require('../../utils/api.js')
 const registry = require('../../data/registry.js')
-const { lineOf } = require('../../utils/aggregate.js')
+const { lineOf, settleView } = require('../../utils/aggregate.js')
+const MODEL_MAP = require('../../data/model_map.js')
 
 function fmtMoney(n) { const a = Math.abs(n), s = n < 0 ? '-$' : '$'; if (a >= 1e6) return s + (a / 1e6).toFixed(2) + 'M'; if (a >= 1e3) return s + (a / 1e3).toFixed(1) + 'k'; return s + Math.round(a) }
 const fmtCny = n => { const a = Math.abs(n); if (a >= 1e8) return '¥' + (a / 1e8).toFixed(2) + '亿'; if (a >= 1e4) return '¥' + (a / 1e4).toFixed(1) + '万'; return '¥' + Math.round(a) }
@@ -11,7 +12,7 @@ const fmtShort = n => { const a = Math.abs(n); if (a >= 1e6) return (n < 0 ? '-'
 
 Page({
   data: {
-    name: '', generatedAt: api.generatedAt, proj: null, locate: null, trend: [], costs: [], owners: [],
+    name: '', generatedAt: api.generatedAt, proj: null, locate: null, trend: [], costs: [], settle: null, procurement: null, owners: [],
     payback: null, inventory: null, refund: null, ads: null,
     timeline: [], stars: [], opexActions: [], reasons: [],
     loading: true, error: '',
@@ -27,14 +28,25 @@ Page({
   async fetch(name) {
     this.setData({ loading: true, error: '' })
     try {
-      const [pnl, fees, payback, inv, refund, ads, timeline, starsAll, compare, opexRows, reasonRows] = await Promise.all([
+      const [pnl, fees, payback, inv, refund, ads, timeline, starsAll, compare, opexRows, reasonRows, procAll] = await Promise.all([
         api.projectPnl(name, 30), api.dash('fees', name), api.dash('payback', name),
         api.dash('inventory', name), api.dash('refund', name), api.dash('ads', name),
         api.projectTimeline(name), api.dash('quality/stars', name),
         api.projectsCompare(30, 100), api.projectOpex(name), api.projectReasons(name),
+        api.dash('procurement', name),
       ])
       const reg = registry.byProduct[name] || null
       const N = api.num
+
+      // 该型号采购(金蝶):按 model_map 反查归到本 local_name 的采购合同(链路一致:型号也带采购)
+      const buyRows = (procAll || []).filter(p => MODEL_MAP[p.product] === name)
+      const buyAmount = buyRows.reduce((s, p) => s + N(p.amount), 0)
+      const buyQty = buyRows.reduce((s, p) => s + N(p.qty), 0)
+      const procurementCard = buyAmount > 0 ? {
+        amountText: fmtCny(buyAmount), qty: buyQty.toLocaleString('en-US'),
+        paidText: fmtCny(buyRows.reduce((s, p) => s + N(p.paid), 0)),
+        oweText: fmtCny(buyRows.reduce((s, p) => s + N(p.outstanding), 0)),
+      } : null
 
       // 头部:近 30 天汇总
       const sum = (arr, k) => arr.reduce((s, r) => s + N(r[k]), 0)
@@ -74,6 +86,15 @@ Page({
       const maxCost = feeItems.reduce((m, c) => Math.max(m, c.cost), 0) || 1
       const costs = feeItems.map(c => ({ description: c.description, costText: fmtMoney(c.cost), barWidth: Math.max(6, Math.round(c.cost / maxCost * 100)) }))
 
+      // 亚马逊结算视角(到手 = 销售 − 各项,全期·USD·≠毛利):销售用 fees 行口径(全期),与各项扣减自洽
+      const sv = settleView(N(feeRow.sales), feeRow)
+      const settle = sv.sales > 0 ? {
+        salesText: fmtMoney(sv.sales),
+        items: sv.items.map(i => ({ label: i.label, valText: '-' + fmtMoney(i.val), w: Math.max(4, Math.round(i.val / sv.sales * 100)) })),
+        netText: fmtMoney(sv.net), netLoss: sv.net < 0,
+        netPct: (sv.net / sv.sales * 100).toFixed(1),
+      } : null
+
       // 费用动作(opex 型号级)
       const opexMax = opexRows.reduce((m, o) => Math.max(m, N(o.amount_cny)), 0) || 1
       const opexActions = opexRows.map(o => ({ category: o.category, costText: fmtCny(N(o.amount_cny)), barWidth: Math.max(6, Math.round(N(o.amount_cny) / opexMax * 100)) }))
@@ -110,7 +131,7 @@ Page({
       ].filter(Boolean) : []
 
       this.setData({
-        proj, locate, trend, costs, owners, timeline: tl, stars, opexActions, reasons,
+        proj, locate, trend, costs, settle, procurement: procurementCard, owners, timeline: tl, stars, opexActions, reasons,
         payback: paybackData, inventory: inventoryData, refund: refundData, ads: adsData, loading: false,
       })
     } catch (e) {

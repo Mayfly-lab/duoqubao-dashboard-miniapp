@@ -1,6 +1,6 @@
 <view class="container">
 
-  <view class="demo-banner">团队 = 各产品类下的 <text class="text-green">负责人 / 参与人</text>（registry 归属）· 个人毛利只计主责 · 费用动作 opex 全期（型号级偏漏）。</view>
+  <view class="demo-banner">团队 = 各产品类下的 <text class="text-green">负责人 / 参与人</text>（registry 归属）· 组织职责视图，<text class="text-blue">不挂个人盈亏/费用</text>（opex 无产品列·无人字段，拆不到个人）。</view>
 
   <view wx:if="{{loading}}" class="card">加载中…</view>
   <view wx:if="{{error}}" class="card" style="color:#f06292">{{error}}</view>
@@ -26,27 +26,20 @@
     <view wx:if="{{item.expanded}}" class="people">
       <view wx:for="{{item.people}}" wx:for-item="pe" wx:key="name" class="person">
         <view class="person-head" data-name="{{pe.name}}" bindtap="onPersonTap">
-          <view class="person-name">{{pe.name}}<text class="person-arrow">{{pe.expanded ? ' ▲' : ' ▼'}}</text></view>
-          <view class="person-right">
-            <view class="person-contrib {{pe.loss ? 'text-pink' : 'text-green'}}">毛利 {{pe.profitText}}</view>
-            <view class="person-opex">费用动作 {{pe.opexTotalText}}</view>
+          <view class="person-left">
+            <view class="person-name">{{pe.name}}<text class="person-arrow">{{pe.expanded ? ' ▲' : ' ▼'}}</text></view>
+            <view class="person-badges">
+              <text class="badge badge-own">主责 {{pe.ownCount}}</text>
+              <text wx:if="{{pe.joinCount}}" class="badge badge-join">参与 {{pe.joinCount}}</text>
+            </view>
           </view>
         </view>
 
-        <!-- 个人:负责产品 + 费用动作 -->
+        <!-- 个人:负责产品清单（仅职责，不挂盈亏/费用）-->
         <view wx:if="{{pe.expanded}}" class="person-detail">
-          <view wx:for="{{pe.products}}" wx:for-item="p" wx:key="name" class="prod-block">
-            <view class="prod-row">
-              <text class="prod-name">{{p.name}}<text class="prod-role">{{p.role}}</text></text>
-              <text class="prod-val {{p.loss ? 'text-pink' : 'text-green'}}">{{p.salesText}}</text>
-            </view>
-            <view wx:if="{{p.actions.length}}" class="prod-acts">
-              <view wx:for="{{p.actions}}" wx:for-item="a" wx:key="category" class="act-row">
-                <text class="act-name">· {{a.category}}</text>
-                <text class="act-val">{{a.costText}}</text>
-              </view>
-            </view>
-            <view wx:else class="empty-mini">· 无报销记录（型号级偏漏）</view>
+          <view wx:for="{{pe.products}}" wx:for-item="p" wx:key="name" class="prod-row">
+            <text class="prod-name">{{p.name}}</text>
+            <text class="prod-role {{p.isOwner ? 'role-own' : 'role-join'}}">{{p.role}}</text>
           </view>
         </view>
       </view>
@@ -54,5 +47,5 @@
   </view>
   </block>
 
-  <view class="foot-note">数据：领星 + 金蝶财务（duoqubao-api 快照 {{generatedAt}}）· 团队按产品类组织 · 个人毛利只计主责</view>
+  <view class="foot-note">数据：领星销售（duoqubao-api 快照 {{generatedAt}}）· 团队按产品类组织 · 类级销售/毛利为真账，个人仅显示职责与主责销售体量 · 费用(opex)无产品列/无人字段，仅在公司·类级展示</view>
 </view>

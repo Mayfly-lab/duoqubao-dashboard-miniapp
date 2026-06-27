@@ -17,6 +17,8 @@ function fmtMoney(n) {
   if (a >= 1e3) return s + (a / 1e3).toFixed(1) + 'k'
   return s + Math.round(a)
 }
+const FX = 6.8                                   // USD→CNY(与类页/时间轴口径一致)
+const fmtCny = n => { const a = Math.abs(n), s = n < 0 ? '-¥' : '¥'; return a >= 1e4 ? s + (a / 1e4).toFixed(0) + '万' : s + Math.round(a) }
 
 Page({
   data: {
@@ -34,9 +36,10 @@ Page({
   async fetch() {
     this.setData({ loading: true, error: '' })
     try {
-      const [rows, plist, payback] = await Promise.all([
-        api.projectsCompare(), api.projectsList(), api.dash('payback'),
+      const [rows, plist, payback, opexCompany] = await Promise.all([
+        api.projectsCompare(), api.projectsList(), api.dash('payback'), api.dash('opex_company'),
       ])
+      this._opexCompanyTotal = (opexCompany || []).reduce((s, r) => s + api.num(r.amount_cny), 0)
       const skuMap = {}
       plist.forEach(p => { skuMap[p.local_name] = p.sku_count })
       const raw = rows.map(p => ({
@@ -58,10 +61,16 @@ Page({
     const sales = list.reduce((s, p) => s + p.sales, 0)
     const profit = list.reduce((s, p) => s + p.profit, 0)
     const adCost = list.reduce((s, p) => s + p.ad_cost, 0)
+    // 净利(公司级,CNY):毛利换汇 − 公司全量运营费(opex 公司级总额,无归属偏漏问题,只在「全公司」层可这么算)
+    const grossCny = profit * FX
+    const opexCny = this._opexCompanyTotal || 0
+    const netCny = grossCny - opexCny
     const kpi = {
       sales: fmtMoney(sales), profit: fmtMoney(profit),
       marginPct: sales ? (profit / sales * 100).toFixed(1) : '0.0',
       acosPct: sales ? (adCost / sales * 100).toFixed(1) : '0.0',
+      netText: fmtCny(netCny), netLoss: netCny < 0,
+      grossCnyText: fmtCny(grossCny), opexCnyText: fmtCny(opexCny),
     }
     const cats = groupByCategory(list, this.data._payback)
     const top = cats.length ? Math.max(...cats.map(c => c.sales)) : 1

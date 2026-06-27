@@ -27,6 +27,13 @@
     </view>
   </view>
 
+  <!-- 净利:毛利(USD)与运营费(CNY)币种不同,单列一行并写明口径,避免与上方 $ 毛利混淆 -->
+  <view class="net-line">
+    <text class="net-key">≈ 净利</text>
+    <text class="net-val {{kpi.netLoss ? 'text-pink' : 'text-green'}}">{{kpi.netText}}</text>
+    <text class="net-note">毛利换汇 {{kpi.grossCnyText}} − 公司运营费 {{kpi.opexCnyText}}（FX 6.8;仅全公司层可算,型号/类层 opex 归属偏漏不展示净利）</text>
+  </view>
+
   <!-- 待关注（AI 监控） -->
   <view class="card">
     <view class="card-head">

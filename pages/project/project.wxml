@@ -22,6 +22,16 @@
     </view>
   </view>
 
+  <!-- 采购(金蝶·本型号 2026款·链路一致) -->
+  <view wx:if="{{procurement}}" class="card">
+    <view class="card-title">采购（金蝶 · 本型号 2026款）</view>
+    <view class="ph-grid">
+      <view class="ph-item"><view class="ph-num">{{procurement.amountText}}</view><view class="ph-lab">采购额 · {{procurement.qty}}台</view></view>
+      <view class="ph-item"><view class="ph-num text-green">{{procurement.paidText}}</view><view class="ph-lab">已付</view></view>
+      <view class="ph-item"><view class="ph-num text-yellow">{{procurement.oweText}}</view><view class="ph-lab">欠厂</view></view>
+    </view>
+  </view>
+
   <!-- 回款 -->
   <view wx:if="{{payback}}" class="card">
     <view class="card-title">回款</view>
@@ -103,6 +113,25 @@
       <view class="owner-name">{{item.name}}<text class="owner-team">{{item.team}} · {{item.tag}}</text></view>
     </view>
     <view wx:if="{{owners.length === 0}}" class="empty">未在 registry 找到归属</view>
+  </view>
+
+  <!-- 亚马逊结算视角:到手 = 销售 − 各项(对齐 mockup) -->
+  <view wx:if="{{settle}}" class="card">
+    <view class="card-title">结算视角 · 到手 {{settle.netText}}（{{settle.netPct}}%）</view>
+    <view class="card-hint">全期·USD ⚠️ 平台结算后 ≠ 毛利（未扣采购成本 COGS,口径不同于上方 KPI 毛利）</view>
+    <view class="settle-row settle-top">
+      <view class="settle-name">销售额</view>
+      <view class="settle-val text-green">{{settle.salesText}}</view>
+    </view>
+    <view wx:for="{{settle.items}}" wx:key="label" class="settle-row">
+      <view class="settle-name">− {{item.label}}</view>
+      <view class="settle-bar"><view class="settle-bar-fill" style="width:{{item.w}}%"></view></view>
+      <view class="settle-val text-pink">{{item.valText}}</view>
+    </view>
+    <view class="settle-row settle-net">
+      <view class="settle-name">= 到手</view>
+      <view class="settle-val {{settle.netLoss ? 'text-pink' : 'text-green'}}">{{settle.netText}}</view>
+    </view>
   </view>
 
   <!-- 费用拆解 -->

@@ -1,7 +1,7 @@
 // 类详细看板(完整,向 mockup 看齐):L0 双进度条 + L1 四问 + L0.5 时间轴 + L2 五下钻 + 型号列表。
 // 全部从快照按「类」聚合。采购按 line 关键词匹配 procurement;USD 段 ×FX 统一人民币。
 const api = require('../../utils/api.js')
-const { lineOf, procurementOf } = require('../../utils/aggregate.js')
+const { lineOf, procurementOf, procurementByModel, settleView } = require('../../utils/aggregate.js')
 const registry = require('../../data/registry.js')
 
 const FX = 6.8                                   // USD→CNY(与时间轴口径一致)
@@ -14,7 +14,7 @@ const fmtShort = n => { const a = Math.abs(n); if (a >= 1e6) return (n < 0 ? '-'
 
 Page({
   data: {
-    line: '', generatedAt: api.generatedAt, kpi: {}, level0: null, four: null, models: [],
+    line: '', generatedAt: api.generatedAt, kpi: {}, level0: null, four: null, settle: null, models: [],
     timeline: [], fees: [], ads: null, refund: null, inventory: null, stars: [], opex: [],
     loading: true, error: '',
   },
@@ -57,8 +57,18 @@ Page({
 
       // 费用(fees 加总,USD)
       const feeAgg = { commission: 0, fba_delivery: 0, ads_cost: 0, storage: 0, refunds: 0 }
-      feesAll.filter(f => nameSet.has(f.local_name)).forEach(f => { for (const k in feeAgg) feeAgg[k] += Math.abs(N(f[k])) })
+      let salesFromFees = 0
+      feesAll.filter(f => nameSet.has(f.local_name)).forEach(f => { for (const k in feeAgg) feeAgg[k] += Math.abs(N(f[k])); salesFromFees += N(f.sales) })
       const platFeeUsd = Object.values(feeAgg).reduce((s, v) => s + v, 0)
+
+      // 亚马逊结算视角(到手 = 销售 − 各项,全期·USD·≠毛利):用 fees 口径销售,与各项扣减自洽
+      const sv = settleView(salesFromFees, feeAgg)
+      const settle = sv.sales > 0 ? {
+        salesText: fmtMoney(sv.sales),
+        items: sv.items.map(i => ({ label: i.label, valText: '-' + fmtMoney(i.val), w: Math.max(4, Math.round(i.val / sv.sales * 100)) })),
+        netText: fmtMoney(sv.net), netLoss: sv.net < 0,
+        netPct: (sv.net / sv.sales * 100).toFixed(1),
+      } : null
 
       // 运营费用(opex 类聚合,CNY)
       const opexMap = {}
@@ -68,17 +78,19 @@ Page({
       const opexMax = Math.max(...opexArr.map(o => o.cost), 1)
       const opex = opexArr.map(o => ({ category: o.category, costText: fmtCny(o.cost), barWidth: Math.max(6, Math.round(o.cost / opexMax * 100)) }))
 
-      // ── L0 双进度条(统一 CNY) ──
+      // ── L0 双进度条(对齐 demo §2.2 口径,统一 CNY) ──
+      // 投入 = 采购合同全额(含税·amount) + 头程(¥15/台估) + 运营opex;回款 = 已到账(realized) + 在途(pending)。
+      // 回本率 = (已到账+在途) / 全投入。采购已在快照层按 2026 款收口(fetch_snapshot PROC_YEAR),两侧同代。
       const proc = procurementOf(procurement, line)
       const headFreight = proc.qty * HEAD_FREIGHT_PER_UNIT * FX
-      const invest = proc.amount + headFreight + opexTotal
       const realizedCny = realized * FX, pendingCny = pending * FX
-      const back = realizedCny + pendingCny
+      const invest = proc.amount + headFreight + opexTotal   // 全投入
+      const back = realizedCny + pendingCny                  // 回款(已到账+在途)
       const base = Math.max(invest, back, 1)
       const seg = (val) => Math.round(val / base * 100)
       const level0 = {
         investText: fmtWan(invest), backText: fmtWan(back),
-        lockPct: invest ? Math.round(back / invest * 100) : 0,
+        lockPct: invest ? Math.round(back / invest * 100) : 0,   // 回本率 = 回款 / 全投入
         investSegs: [
           { label: '采购', val: fmtWan(proc.amount), w: seg(proc.amount), cls: 'seg-buy' },
           { label: '头程估', val: fmtWan(headFreight), w: seg(headFreight), cls: 'seg-freight' },
@@ -86,24 +98,37 @@ Page({
         ],
         backSegs: [
           { label: '已到账', val: fmtWan(realizedCny), w: seg(realizedCny), cls: 'seg-realized' },
-          { label: '待回款', val: fmtWan(pendingCny), w: seg(pendingCny), cls: 'seg-pending' },
+          { label: '在途待回', val: fmtWan(pendingCny), w: seg(pendingCny), cls: 'seg-pending' },
         ],
+        owe: fmtWan(proc.outstanding),   // 欠厂应付(账期红利,提示用)
       }
 
-      // ── L1 四问 ──
+      // ── L1 四问(对齐 demo:① 钱→货 ② 货→费用 ③ 卖→回款 ④ 收回vs付出) ──
       const four = {
         q1: { buy: fmtWan(proc.amount), paid: fmtWan(proc.paid), owe: fmtWan(proc.outstanding), qty: proc.qty.toLocaleString('en-US') },
         q2: { freight: fmtWan(headFreight), opex: fmtWan(opexTotal), plat: fmtWan(platFeeUsd * FX) },
         q3: { sales: fmtWan(sales * FX), realized: fmtWan(realizedCny) },
+        // q4 回本:回款 − 全投入 = 盈余/超额(回正即回本)
         q4: { invest: fmtWan(invest), locked: fmtWan(back), over: fmtWan(back - invest), overPos: back >= invest },
       }
 
       // 型号列表
+      // 型号级采购(model_map 把金蝶采购拆到领星型号)+ 未铺货新款(只有采购、领星无销售)
+      const { byModel: procByModel, unstocked } = procurementByModel(procurement, line)
       const top = products.length ? Math.max(...products.map(p => N(p.sales))) : 1
-      const models = products.map(p => ({
-        name: p.local_name, salesText: fmtMoney(N(p.sales)), profitText: fmtMoney(N(p.profit)),
-        marginPct: N(p.margin_pct).toFixed(1), loss: N(p.profit) < 0,
-        barWidth: Math.max(4, Math.round(N(p.sales) / top * 100)),
+      const models = products.map(p => {
+        const pm = procByModel[p.local_name]
+        return {
+          name: p.local_name, salesText: fmtMoney(N(p.sales)), profitText: fmtMoney(N(p.profit)),
+          marginPct: N(p.margin_pct).toFixed(1), loss: N(p.profit) < 0,
+          barWidth: Math.max(4, Math.round(N(p.sales) / top * 100)),
+          buyText: pm ? fmtWan(pm.amount) : '', unstocked: false,
+        }
+      })
+      // 未铺货款追加到型号列表末尾:有采购、销售/回款为 —(链路一致,不漏型号)
+      unstocked.forEach(u => models.push({
+        name: u.jdName, salesText: '—', profitText: '—', marginPct: '—', loss: false,
+        barWidth: 2, buyText: fmtWan(u.amount), unstocked: true,
       }))
 
       // 时间轴
@@ -143,7 +168,7 @@ Page({
         .map(s => ({ asin: s.asin, star: s.star, reviews: s.reviews, low: N(s.star) < 3.5 }))
         .sort((a, b) => N(a.star) - N(b.star))
 
-      this.setData({ kpi, level0, four, models, timeline, fees, ads, refund, inventory: inv, stars, opex, loading: false })
+      this.setData({ kpi, level0, four, settle, models, timeline, fees, ads, refund, inventory: inv, stars, opex, loading: false })
     } catch (e) {
       this.setData({ loading: false, error: '加载失败：' + (e.message || e) })
     }
