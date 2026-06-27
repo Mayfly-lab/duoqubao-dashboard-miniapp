@@ -48,11 +48,12 @@ Page({
       const profit = products.reduce((s, p) => s + N(p.profit), 0)
       const realized = products.reduce((s, p) => s + N((pbMap[p.local_name] || {}).realized_usd), 0)
       const pending = products.reduce((s, p) => s + N((pbMap[p.local_name] || {}).pending_usd), 0)
+      // 顶部 KPI 统一人民币(×FX),与下面回本/采购同币种(毛利率是比值不换算)
       const kpi = {
         count: products.length, loss: profit < 0,
-        salesText: fmtMoney(sales), profitText: fmtMoney(profit),
+        salesText: fmtCny(sales * FX), profitText: fmtCny(profit * FX),
         marginPct: sales ? (profit / sales * 100).toFixed(1) : '0.0',
-        realizedText: fmtMoney(realized), pendingText: fmtMoney(pending),
+        realizedText: fmtCny(realized * FX), pendingText: fmtCny(pending * FX),
       }
 
       // 费用(fees 加总,USD)
@@ -119,7 +120,7 @@ Page({
       const models = products.map(p => {
         const pm = procByModel[p.local_name]
         return {
-          name: p.local_name, salesText: fmtMoney(N(p.sales)), profitText: fmtMoney(N(p.profit)),
+          name: p.local_name, salesText: fmtCny(N(p.sales) * FX), profitText: fmtCny(N(p.profit) * FX),
           marginPct: N(p.margin_pct).toFixed(1), loss: N(p.profit) < 0,
           barWidth: Math.max(4, Math.round(N(p.sales) / top * 100)),
           buyText: pm ? fmtWan(pm.amount) : '', unstocked: false,
@@ -136,7 +137,7 @@ Page({
       tlAll.flat().forEach(t => { tlMap[t.ym] = (tlMap[t.ym] || 0) + N(t.payout_usd) })
       const tlArr = Object.keys(tlMap).sort().map(ym => ({ ym, usd: tlMap[ym] }))
       const tlMax = Math.max(...tlArr.map(t => Math.abs(t.usd)), 1)
-      const timeline = tlArr.map(t => ({ ym: mmShort(t.ym), valShort: fmtShort(t.usd), neg: t.usd < 0, w: Math.max(2, Math.round(Math.abs(t.usd) / tlMax * 100)) }))
+      const timeline = tlArr.map(t => ({ ym: mmShort(t.ym), valShort: '¥' + fmtShort(t.usd * FX), neg: t.usd < 0, w: Math.max(2, Math.round(Math.abs(t.usd) / tlMax * 100)) }))
 
       // 费用扣除横条
       const feeItems = [

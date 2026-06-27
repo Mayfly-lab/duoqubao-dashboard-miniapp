@@ -12,6 +12,7 @@
       <view class="ph-item"><view class="ph-num text-green">{{kpi.realizedText}}</view><view class="ph-lab">已到账</view></view>
       <view class="ph-item"><view class="ph-num text-yellow">{{kpi.pendingText}}</view><view class="ph-lab">待回款</view></view>
     </view>
+    <view class="card-hint">金额均为人民币（领星美元 × FX 6.8），与下方回本/采购同币种</view>
   </view>
 
   <!-- L0 双进度条 -->
@@ -71,7 +72,7 @@
 
   <!-- 回款时间轴 -->
   <view wx:if="{{timeline.length}}" class="card">
-    <view class="card-title">回款时间轴（月度到账 · USD）</view>
+    <view class="card-title">回款时间轴（月度到账 · ¥）</view>
     <view class="card-hint">柱高=当月到账额，红=负值（退款&gt;订单）</view>
     <view wx:for="{{timeline}}" wx:key="ym" class="tl-row">
       <text class="tl-ym">{{item.ym}}</text>
@@ -121,7 +122,7 @@
 
   <!-- 费用扣除 -->
   <view wx:if="{{fees.length}}" class="card">
-    <view class="card-title">费用扣除（平台）</view>
+    <view class="card-title">费用扣除（平台 · 美元结算 $）</view>
     <view wx:for="{{fees}}" wx:key="description" class="fee-row">
       <view class="fee-name">{{item.description}}</view>
       <view class="fee-bar"><view class="fee-bar-fill" style="width:{{item.barWidth}}%"></view></view>
