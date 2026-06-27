@@ -27,7 +27,7 @@
     </view>
   </view>
 
-  <!-- 净利:毛利(USD)与运营费(CNY)币种不同,单列一行并写明口径,避免与上方 $ 毛利混淆 -->
+  <!-- 净利:毛利换汇¥ − 公司级运营费¥(全页已统一人民币) -->
   <view class="net-line">
     <text class="net-key">≈ 净利</text>
     <text class="net-val {{kpi.netLoss ? 'text-pink' : 'text-green'}}">{{kpi.netText}}</text>

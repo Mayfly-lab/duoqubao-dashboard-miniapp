@@ -65,8 +65,9 @@ Page({
     const grossCny = profit * FX
     const opexCny = this._opexCompanyTotal || 0
     const netCny = grossCny - opexCny
+    // 全页统一人民币(领星美元 ×FX),与净利/类页同币种
     const kpi = {
-      sales: fmtMoney(sales), profit: fmtMoney(profit),
+      sales: fmtCny(sales * FX), profit: fmtCny(profit * FX),
       marginPct: sales ? (profit / sales * 100).toFixed(1) : '0.0',
       acosPct: sales ? (adCost / sales * 100).toFixed(1) : '0.0',
       netText: fmtCny(netCny), netLoss: netCny < 0,
@@ -76,9 +77,9 @@ Page({
     const top = cats.length ? Math.max(...cats.map(c => c.sales)) : 1
     const rawCategories = cats.map(c => ({
       line: c.line, count: c.count, sales: c.sales, profit: c.profit,
-      salesText: fmtMoney(c.sales), profitText: fmtMoney(c.profit),
+      salesText: fmtCny(c.sales * FX), profitText: fmtCny(c.profit * FX),
       marginPct: c.margin_pct.toFixed(1),
-      realizedText: fmtMoney(c.realized), pendingText: fmtMoney(c.pending),
+      realizedText: fmtCny(c.realized * FX), pendingText: fmtCny(c.pending * FX),
       loss: c.profit < 0,
       barWidth: Math.max(4, Math.round(c.sales / top * 100)),
     }))
