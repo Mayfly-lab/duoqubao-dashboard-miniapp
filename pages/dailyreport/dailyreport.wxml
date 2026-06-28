@@ -1,0 +1,104 @@
+<view class="container">
+
+  <view wx:if="{{loading}}" class="card">加载中…</view>
+  <view wx:if="{{error}}" class="card" style="color:#f06292">{{error}}</view>
+
+  <block wx:if="{{!loading && !error}}">
+
+  <!-- 日期选择器 -->
+  <view class="dr-header">
+    <view class="dr-title">员工日报</view>
+    <picker mode="selector" range="{{reportDates}}" value="{{selectedIdx}}" bindchange="onDatePick">
+      <view class="date-pick-btn">{{reportDates[selectedIdx] || '选日期'}} ▾</view>
+    </picker>
+  </view>
+  <view class="role-hint">数据快照 {{generatedAt}}</view>
+
+  <!-- 核心指标 -->
+  <view wx:if="{{report}}" class="card">
+    <view class="dr-date-label">{{report.date}} 日报</view>
+    <view class="kpi-grid">
+      <view class="kpi-item">
+        <view class="kpi-label">总销售额</view>
+        <view class="kpi-val">{{report.sales}}</view>
+        <view class="kpi-sub {{report.vsL7Up ? 'text-green' : 'text-pink'}}">vs L7均 {{report.vsL7}}</view>
+      </view>
+      <view class="kpi-item">
+        <view class="kpi-label">回款</view>
+        <view class="kpi-val text-blue">{{report.payback}}</view>
+        <view class="kpi-sub text-muted">L7均 {{report.l7avg}}</view>
+      </view>
+      <view class="kpi-item">
+        <view class="kpi-label">毛利润</view>
+        <view class="kpi-val {{report.profitLoss ? 'text-pink' : 'text-green'}}">{{report.profit}}</view>
+        <view class="kpi-sub text-muted">利润率 {{report.profitPct}}%</view>
+      </view>
+      <view class="kpi-item">
+        <view class="kpi-label">广告费</view>
+        <view class="kpi-val">{{report.ads}}</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 按运营分 -->
+  <view wx:if="{{operators.length}}" class="card">
+    <view class="section-title">按负责运营</view>
+    <view wx:for="{{operators}}" wx:key="name" class="op-row">
+      <view class="op-name">{{item.name}}</view>
+      <view class="op-right">
+        <text class="op-sales">{{item.sales}}</text>
+        <text class="op-profit {{item.loss ? 'text-pink' : 'text-green'}}"> · 毛利 {{item.profit}}</text>
+        <text class="op-count text-muted"> · {{item.count}}品</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 分段汇总 -->
+  <view wx:if="{{segments.length}}" class="card">
+    <view class="section-title">分段汇总</view>
+    <view wx:for="{{segments}}" wx:key="label" class="seg-row">
+      <text class="seg-label">{{item.label}}</text>
+      <text class="seg-count text-muted">{{item.count}}组</text>
+      <text class="seg-sales"> {{item.sales}}</text>
+      <text class="seg-pct text-muted"> · {{item.pct}}%</text>
+    </view>
+  </view>
+
+  <!-- 库龄预警 -->
+  <view wx:if="{{aging}}" class="card">
+    <view class="section-title">库龄预警</view>
+    <view class="aging-row">
+      <text class="aging-label text-muted">365天+</text>
+      <text class="text-pink"> {{aging.over365}} SKU · {{aging.qty365}} 件</text>
+    </view>
+    <view class="aging-row">
+      <text class="aging-label text-muted">270天+</text>
+      <text class="text-yellow"> {{aging.over270}} SKU · {{aging.qty270}} 件</text>
+    </view>
+    <view wx:if="{{aging.topItems.length}}" class="aging-top">
+      <text class="text-muted" style="font-size:20rpx">高危品：</text>
+      <text wx:for="{{aging.topItems}}" wx:for-item="t" wx:key="name" class="aging-chip">{{t.name}} {{t.qty}}件</text>
+    </view>
+  </view>
+
+  <!-- 运营行动 -->
+  <view wx:if="{{checkins.length}}" class="card">
+    <view class="section-title">运营行动（近14天）</view>
+    <view wx:for="{{checkins}}" wx:key="date" class="checkin-group">
+      <view class="checkin-date">{{item.date}}</view>
+      <view wx:for="{{item.actions}}" wx:for-item="a" wx:key="action_id" class="checkin-item">
+        <view class="checkin-head">
+          <text class="checkin-name">{{a.name}}</text>
+          <text class="checkin-cat">{{a.category}}</text>
+          <text class="checkin-fu {{a.follow_up === '已闭环' ? 'fu-done' : a.follow_up === '待跟进' ? 'fu-pending' : 'fu-none'}}">{{a.follow_up}}</text>
+        </view>
+        <view class="checkin-summary">{{a.summary}}</view>
+        <view wx:if="{{a.product}}" class="checkin-product text-muted">产品：{{a.product}}</view>
+      </view>
+    </view>
+  </view>
+
+  </block>
+
+  <view class="foot-note">数据：飞书日报推送 + 运营 checkin 行动 · 快照 {{generatedAt}}</view>
+</view>

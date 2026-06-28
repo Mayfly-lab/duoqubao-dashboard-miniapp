@@ -6,7 +6,8 @@
     "pages/team/team",
     "pages/index/index",
     "pages/rank/rank",
-    "pages/capabilities/capabilities"
+    "pages/capabilities/capabilities",
+    "pages/dailyreport/dailyreport"
   ],
   "tabBar": {
     "color": "#94a3c4",
@@ -25,6 +26,10 @@
       {
         "pagePath": "pages/index/index",
         "text": "使用数据"
+      },
+      {
+        "pagePath": "pages/dailyreport/dailyreport",
+        "text": "员工日报"
       },
       {
         "pagePath": "pages/capabilities/capabilities",

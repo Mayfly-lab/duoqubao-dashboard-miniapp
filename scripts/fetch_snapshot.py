@@ -57,6 +57,37 @@ def main():
     snap["timeline_payout"] = timeline
     snap["opex"] = opex
     snap["quality_reasons_by"] = reasons
+
+    print("== 日报 + 运营行动 ==", flush=True)
+    # 日报：取最近 30 条，逐条补全 full_content
+    reports_list = get("/feishu/reports", {"module": "daily_report", "limit": 30})
+    reports_full = []
+    seen_dates = set()
+    for r in reports_list:
+        # 日报按用户多条推送同内容，按 feishu_msg_id 去重只保留每天一条
+        mid = r.get("feishu_msg_id", r["id"])
+        if mid in seen_dates:
+            continue
+        seen_dates.add(mid)
+        url = BASE + f"/feishu/reports/{r['id']}"
+        req = urllib.request.Request(url, headers={"X-API-Key": KEY})
+        try:
+            with urllib.request.urlopen(req, timeout=30) as resp:
+                detail = json.loads(resp.read())
+            r["full_content"] = detail.get("full_content") or detail.get("data", {}).get("full_content") or {}
+        except Exception as e:
+            print(f"  ! report {r['id']} full_content FAIL: {e}", flush=True)
+            r["full_content"] = {}
+        reports_full.append(r)
+    snap["daily_reports"] = reports_full
+    print(f"  daily_reports: {len(reports_full)} 条（去重后）", flush=True)
+
+    # 运营行动：最近 14 天
+    import datetime
+    since = (datetime.date.today() - datetime.timedelta(days=14)).isoformat()
+    snap["checkin_actions"] = get("/checkin", {"since": since, "limit": 200})
+    print(f"  checkin_actions: {len(snap['checkin_actions'])} 行", flush=True)
+
     snap["_generated"] = time.strftime("%Y-%m-%d %H:%M")
 
     with open(OUT, "w", encoding="utf-8") as f:

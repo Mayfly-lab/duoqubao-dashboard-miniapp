@@ -1,0 +1,53 @@
+.dr-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8rpx; }
+.dr-title { font-size: 34rpx; font-weight: 600; color: #eef2fb; }
+.date-pick-btn { font-size: 24rpx; color: #5b8cff; background: rgba(91,140,255,.12); padding: 6rpx 18rpx; border-radius: 8rpx; }
+.role-hint { font-size: 22rpx; color: #6b7280; margin-bottom: 24rpx; }
+.dr-date-label { font-size: 22rpx; color: #6b7280; margin-bottom: 18rpx; }
+
+/* KPI 四宫格 */
+.kpi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20rpx; }
+.kpi-item { background: #0f1729; border-radius: 12rpx; padding: 18rpx 16rpx; }
+.kpi-label { font-size: 20rpx; color: #6b7280; margin-bottom: 6rpx; }
+.kpi-val { font-size: 30rpx; font-weight: 600; color: #eef2fb; }
+.kpi-sub { font-size: 18rpx; margin-top: 4rpx; }
+
+/* 按运营分 */
+.section-title { font-size: 24rpx; font-weight: 600; color: #94a3c4; margin-bottom: 16rpx; }
+.op-row { display: flex; justify-content: space-between; align-items: center; padding: 10rpx 0; border-bottom: 1rpx solid #1a2438; }
+.op-row:last-child { border-bottom: none; }
+.op-name { font-size: 26rpx; color: #eef2fb; font-weight: 500; min-width: 80rpx; }
+.op-right { font-size: 22rpx; text-align: right; }
+.op-sales { color: #eef2fb; }
+.op-profit { }
+.op-count { }
+
+/* 分段 */
+.seg-row { display: flex; align-items: center; padding: 8rpx 0; border-bottom: 1rpx solid #1a2438; font-size: 22rpx; }
+.seg-row:last-child { border-bottom: none; }
+.seg-label { color: #eef2fb; width: 140rpx; flex-shrink: 0; }
+.seg-count { width: 60rpx; flex-shrink: 0; }
+.seg-sales { color: #eef2fb; flex: 1; text-align: right; }
+.seg-pct { width: 80rpx; text-align: right; }
+
+/* 库龄 */
+.aging-row { display: flex; align-items: center; padding: 6rpx 0; font-size: 24rpx; }
+.aging-label { width: 80rpx; flex-shrink: 0; }
+.aging-top { margin-top: 12rpx; display: flex; flex-wrap: wrap; align-items: center; gap: 8rpx; }
+.aging-chip { font-size: 20rpx; background: rgba(240,98,146,.12); color: #f06292; padding: 2rpx 12rpx; border-radius: 6rpx; margin-right: 8rpx; margin-bottom: 4rpx; }
+
+/* 运营行动 */
+.checkin-group { margin-bottom: 16rpx; }
+.checkin-date { font-size: 20rpx; color: #6b7280; margin-bottom: 8rpx; padding-bottom: 4rpx; border-bottom: 1rpx solid #2c3a5c; }
+.checkin-item { padding: 10rpx 0; border-bottom: 1rpx solid #1a2438; }
+.checkin-item:last-child { border-bottom: none; }
+.checkin-head { display: flex; align-items: center; flex-wrap: wrap; gap: 8rpx; margin-bottom: 6rpx; }
+.checkin-name { font-size: 24rpx; font-weight: 600; color: #eef2fb; margin-right: 8rpx; }
+.checkin-cat { font-size: 18rpx; color: #5b8cff; background: rgba(91,140,255,.12); padding: 2rpx 10rpx; border-radius: 6rpx; }
+.checkin-fu { font-size: 18rpx; padding: 2rpx 10rpx; border-radius: 6rpx; }
+.fu-done { color: #4ade80; background: rgba(74,222,128,.1); }
+.fu-pending { color: #fbbf24; background: rgba(251,191,36,.1); }
+.fu-none { color: #6b7280; background: rgba(107,114,128,.1); }
+.checkin-summary { font-size: 22rpx; color: #cbd5e1; }
+.checkin-product { font-size: 20rpx; margin-top: 4rpx; }
+
+.foot-note { text-align: center; font-size: 20rpx; color: #6b7280; margin-top: 32rpx; }
