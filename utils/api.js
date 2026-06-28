@@ -38,4 +38,8 @@ const projectReasons = name => Promise.resolve((SNAP.quality_reasons_by || {})[n
 // 快照生成时间(页面标注数据时效用)
 const generatedAt = SNAP._generated || ''
 
-module.exports = { num, projectsCompare, projectsList, projectCosts, projectPnl, dash, projectTimeline, projectOpex, projectReasons, generatedAt }
+// 全量回款/时间轴（团队页批量聚合用，避免逐产品循环调用）
+const allTimelines = () => Promise.resolve(SNAP.timeline_payout || {})
+const allPaybacks = () => Promise.resolve(SNAP.payback || [])
+
+module.exports = { num, projectsCompare, projectsList, projectCosts, projectPnl, dash, projectTimeline, projectOpex, projectReasons, generatedAt, allTimelines, allPaybacks }

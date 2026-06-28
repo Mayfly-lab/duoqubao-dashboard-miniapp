@@ -23,14 +23,45 @@
 .badge { font-size: 18rpx; border-radius: 6rpx; padding: 2rpx 10rpx; margin-right: 8rpx; }
 .badge-own { color: #5b8cff; background: rgba(91,140,255,.14); }
 .badge-join { color: #94a3c4; background: rgba(148,163,196,.12); }
-/* 个人:负责产品清单 */
+
+/* 个人展开区 */
 .person-detail { margin-top: 14rpx; padding: 8rpx 16rpx; background: #0f1729; border-radius: 14rpx; }
-.prod-row { display: flex; justify-content: space-between; align-items: center; padding: 12rpx 0; border-top: 1rpx solid #1a2438; }
-.prod-row:first-child { border-top: none; }
+
+/* 主责产品回款汇总行 */
+.pe-pb-row { display: flex; align-items: center; flex-wrap: wrap; padding: 6rpx 0 14rpx; font-size: 22rpx; border-bottom: 1rpx solid #1a2438; margin-bottom: 4rpx; }
+.pe-pb-label { font-size: 20rpx; color: #6b7280; margin-right: 10rpx; }
+
+/* 产品条目容器（相邻间加分割线）*/
+.prod-item { }
+.prod-item + .prod-item { border-top: 1rpx solid #1a2438; }
+
+/* 产品行 */
+.prod-row { display: flex; justify-content: space-between; align-items: center; padding: 12rpx 0; }
+.prod-row-right { display: flex; align-items: center; }
 .prod-name { font-size: 24rpx; color: #cbd5e1; flex: 1; min-width: 0; }
 .prod-role { font-size: 18rpx; border-radius: 6rpx; padding: 0 8rpx; margin-left: 10rpx; flex-shrink: 0; }
 .role-own { color: #5b8cff; background: rgba(91,140,255,.14); }
 .role-join { color: #94a3c4; background: rgba(148,163,196,.12); }
-.prod-val { font-size: 22rpx; color: #eef2fb; flex-shrink: 0; }
+.prod-expand-arrow { font-size: 18rpx; color: #94a3c4; margin-left: 10rpx; flex-shrink: 0; }
+
+/* 产品生命周期展开区 */
+.prod-lifecycle { background: #0b1220; border-radius: 12rpx; padding: 16rpx 18rpx; margin-bottom: 8rpx; }
+
+/* 回款明细行 */
+.lc-pb-row { display: flex; align-items: center; flex-wrap: wrap; margin-bottom: 14rpx; }
+.lc-pb-item { font-size: 22rpx; }
+.lc-pb-sep { font-size: 22rpx; color: #6b7280; }
+
+/* 月度时间轴 */
+.lc-chart-title { font-size: 20rpx; color: #6b7280; margin-bottom: 10rpx; }
+.lc-chart { width: 100%; white-space: nowrap; }
+.lc-bars { display: inline-flex; flex-direction: row; flex-wrap: nowrap; align-items: flex-start; }
+.lc-bar-col { display: flex; flex-direction: column; align-items: center; width: 38rpx; flex-shrink: 0; }
+.lc-pos-zone { height: 56rpx; width: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; }
+.lc-bar-pos { width: 22rpx; background: #5b8cff; border-radius: 3rpx 3rpx 0 0; }
+.lc-zero { height: 2rpx; width: 22rpx; background: #2c3a5c; }
+.lc-neg-zone { height: 56rpx; width: 100%; display: flex; flex-direction: column; justify-content: flex-start; align-items: center; }
+.lc-bar-neg { width: 22rpx; background: #f06292; border-radius: 0 0 3rpx 3rpx; }
+.lc-bar-label { font-size: 16rpx; color: #6b7280; text-align: center; margin-top: 4rpx; }
 
 .foot-note { text-align: center; font-size: 20rpx; color: #6b7280; margin-top: 32rpx; }

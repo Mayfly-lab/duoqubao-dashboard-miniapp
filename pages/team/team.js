@@ -1,23 +1,39 @@
-// 团队管理(老板个人工具·无角色切换):产品类 → 类下人员(主责∪参与)→ 个人负责产品。
-// 组织职责视图:人头上不挂毛利/费用(opex 无产品列·无人字段,拆不到个人,见 finance-consistency-audit)。
-// 个人只显示职责(主责N/参与M)+ 主责产品销售合计(真账体量)。费用/盈亏交给 finance/category 页类级展示。
+// 团队管理:产品类 → 类下人员(主责∪参与)→ 个人负责产品 → 产品生命周期时间轴。
+// 组织职责视图:人头上不挂毛利/费用(opex 无产品列·无人字段,拆不到个人)。
+// 个人回款 = 主责产品 payback 汇总；月度时间轴来自 timeline_payout。
 const api = require('../../utils/api.js')
 const registry = require('../../data/registry.js')
 const { lineOf } = require('../../utils/aggregate.js')
 
-function fmtMoney(n) { const a = Math.abs(n), s = n < 0 ? '-$' : '$'; if (a >= 1e6) return s + (a / 1e6).toFixed(2) + 'M'; if (a >= 1e3) return s + (a / 1e3).toFixed(1) + 'k'; return s + Math.round(a) }
+function fmtMoney(n) {
+  const a = Math.abs(n), s = n < 0 ? '-$' : '$'
+  if (a >= 1e6) return s + (a / 1e6).toFixed(2) + 'M'
+  if (a >= 1e3) return s + (a / 1e3).toFixed(1) + 'k'
+  return s + Math.round(a)
+}
 
 Page({
   data: {
     generatedAt: api.generatedAt,
-    categories: [], expandedLine: '', expandedPerson: '', loading: true, error: '', _lines: [],
+    categories: [],
+    expandedLine: '', expandedPerson: '', expandedProduct: '',
+    loading: true, error: '', _lines: [],
   },
+
   onLoad() { this.fetch() },
 
   async fetch() {
     this.setData({ loading: true, error: '' })
     try {
-      const compare = await api.projectsCompare()
+      const [compare, timelines, paybacks] = await Promise.all([
+        api.projectsCompare(),
+        api.allTimelines(),
+        api.allPaybacks(),
+      ])
+      // Store as instance vars (not reactive) to avoid serialization cost
+      this._timelines = timelines
+      this._pbMap = {}
+      paybacks.forEach(p => { this._pbMap[p.local_name] = p })
 
       const byLine = {}
       compare.forEach(p => {
@@ -42,34 +58,91 @@ Page({
     }
   },
 
+  // Build monthly bar chart data for a single product
+  _buildTimeline(name) {
+    const months = (this._timelines || {})[name] || []
+    if (!months.length) return []
+    const maxAbs = Math.max(...months.map(m => Math.abs(api.num(m.payout_usd))), 1)
+    return months.map(m => {
+      const v = api.num(m.payout_usd)
+      const h = Math.round(Math.abs(v) / maxAbs * 52)
+      return { ym: m.ym, label: m.ym.slice(5), positive: v >= 0, posH: v >= 0 ? h : 0, negH: v < 0 ? h : 0 }
+    })
+  },
+
   render() {
-    const { expandedLine, expandedPerson } = this.data
+    const { expandedLine, expandedPerson, expandedProduct } = this.data
+    const pbMap = this._pbMap || {}
     const lines = this.data._lines.slice().sort((a, b) => b.sales - a.sales)
     const top = lines.length ? Math.max(...lines.map(L => L.sales)) : 1
+
     const categories = lines.map(L => ({
-      line: L.line, peopleCount: Object.keys(L.people).length,
-      salesText: fmtMoney(L.sales), profitText: fmtMoney(L.profit),
+      line: L.line,
+      peopleCount: Object.keys(L.people).length,
+      salesText: fmtMoney(L.sales),
+      profitText: fmtMoney(L.profit),
       marginPct: L.sales ? (L.profit / L.sales * 100).toFixed(1) : '0.0',
-      loss: L.profit < 0, barWidth: Math.max(4, Math.round(L.sales / top * 100)),
+      loss: L.profit < 0,
+      barWidth: Math.max(4, Math.round(L.sales / top * 100)),
       expanded: L.line === expandedLine,
-      people: Object.values(L.people).sort((a, b) => (b.ownCount - a.ownCount) || (b.joinCount - a.joinCount)).map(pe => ({
-        name: pe.name, pcount: pe.products.length,
-        ownCount: pe.ownCount, joinCount: pe.joinCount,
-        expanded: L.line === expandedLine && pe.name === expandedPerson,
-        products: pe.products.slice().sort((a, b) => b.sales - a.sales).map(p => ({
-          name: p.name, role: p.role, isOwner: p.role === '主责',
-        })),
-      })),
+      people: Object.values(L.people)
+        .sort((a, b) => (b.ownCount - a.ownCount) || (b.joinCount - a.joinCount))
+        .map(pe => {
+          const peExpanded = L.line === expandedLine && pe.name === expandedPerson
+          // Aggregate payback across owned products only
+          const ownedNames = pe.products.filter(p => p.role === '主责').map(p => p.name)
+          const peRealized = ownedNames.reduce((s, n) => s + api.num((pbMap[n] || {}).realized_usd), 0)
+          const pePending = ownedNames.reduce((s, n) => s + api.num((pbMap[n] || {}).pending_usd), 0)
+          return {
+            name: pe.name,
+            pcount: pe.products.length,
+            ownCount: pe.ownCount,
+            joinCount: pe.joinCount,
+            personRealized: fmtMoney(peRealized),
+            personPending: fmtMoney(pePending),
+            hasPayback: peRealized > 0 || pePending > 0,
+            expanded: peExpanded,
+            products: pe.products.slice().sort((a, b) => b.sales - a.sales).map(p => {
+              const prodKey = `${L.line}:${pe.name}:${p.name}`
+              const pb = pbMap[p.name] || {}
+              const realized = api.num(pb.realized_usd)
+              const pending = api.num(pb.pending_usd)
+              const locked = api.num(pb.locked_usd)
+              const timeline = this._buildTimeline(p.name)
+              return {
+                name: p.name,
+                role: p.role,
+                isOwner: p.role === '主责',
+                key: prodKey,
+                expanded: prodKey === expandedProduct,
+                realized: fmtMoney(realized),
+                pending: fmtMoney(pending),
+                locked: fmtMoney(locked),
+                hasPayback: realized > 0 || pending > 0,
+                hasLocked: locked > 0,
+                timeline,
+                hasTimeline: timeline.length > 0,
+              }
+            }),
+          }
+        }),
     }))
     this.setData({ categories })
   },
 
   onCatTap(e) {
     const line = e.currentTarget.dataset.line
-    this.setData({ expandedLine: this.data.expandedLine === line ? '' : line, expandedPerson: '' }, () => this.render())
+    const same = this.data.expandedLine === line
+    this.setData({ expandedLine: same ? '' : line, expandedPerson: '', expandedProduct: '' }, () => this.render())
   },
   onPersonTap(e) {
     const name = e.currentTarget.dataset.name
-    this.setData({ expandedPerson: this.data.expandedPerson === name ? '' : name }, () => this.render())
+    const same = this.data.expandedPerson === name
+    this.setData({ expandedPerson: same ? '' : name, expandedProduct: '' }, () => this.render())
+  },
+  onProductTap(e) {
+    const key = e.currentTarget.dataset.key
+    const same = this.data.expandedProduct === key
+    this.setData({ expandedProduct: same ? '' : key }, () => this.render())
   },
 })
