@@ -15,8 +15,14 @@
     <view class="card-hint">金额均为人民币（领星美元 × FX 6.8），与下方回本/采购同币种</view>
   </view>
 
+  <!-- L0 采购未归集:大杂烩/特殊线,金蝶按产品名记账拆不到本类,不显示误导的回本% -->
+  <view wx:if="{{level0 && level0.procMissing}}" class="card">
+    <view class="card-title">回本进度 · 待补</view>
+    <view class="card-hint">本类采购未归集——属大杂烩/特殊线（长尾/其他/种子链接等），金蝶按具体产品名记账，无法按本类名匹配采购，故回本暂不计算。回款（已到账+在途）{{level0.backText}} 仍可见于上方 KPI。</view>
+  </view>
+
   <!-- L0 双进度条 -->
-  <view wx:if="{{level0}}" class="card">
+  <view wx:if="{{level0 && !level0.procMissing}}" class="card">
     <view class="card-title">回本进度 · 锁定 {{level0.lockPct}}%</view>
     <view class="card-hint">上=全投入 {{level0.investText}} / 下=回款 {{level0.backText}}（已到账+在途·同比例尺·¥）· 采购取活跃代 {{level0.buyYear}} 年（治款混·与回款同代）· 头程按台数估 · opex 类聚合偏漏</view>
     <view class="prog">
@@ -35,7 +41,7 @@
   </view>
 
   <!-- L1 四问 -->
-  <view wx:if="{{four}}" class="card">
+  <view wx:if="{{four && !level0.procMissing}}" class="card">
     <view class="card-title">四问</view>
     <view class="q-grid">
       <view class="q-card">

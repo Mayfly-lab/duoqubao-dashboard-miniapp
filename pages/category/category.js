@@ -103,6 +103,7 @@ Page({
         ],
         owe: fmtWan(proc.outstanding),   // 欠厂应付(账期红利,提示用)
         buyYear: proc.year || '—',       // 活跃代年份
+        procMissing: proc.amount === 0,  // 采购未归集(大杂烩/特殊线,金蝶名拆不到本类)→ 不显示误导的回本%
       }
 
       // ── L1 四问(对齐 demo:① 钱→货 ② 货→费用 ③ 卖→回款 ④ 收回vs付出) ──
