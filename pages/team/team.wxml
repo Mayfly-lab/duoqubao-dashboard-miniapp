@@ -11,11 +11,11 @@
   <!-- 时间轴日期范围过滤 -->
   <view class="date-filter-row">
     <text class="date-filter-label">时间轴范围</text>
-    <picker mode="year-month" value="{{startYm}}" bindchange="onStartPick">
+    <picker mode="year-month" value="{{startYm}}" start="2020-01" end="2030-12" bindchange="onStartPick" style="display:block">
       <view class="date-pick-btn">{{startYm || '起始月'}}</view>
     </picker>
-    <text class="date-sep"> — </text>
-    <picker mode="year-month" value="{{endYm}}" bindchange="onEndPick">
+    <text class="date-sep">—</text>
+    <picker mode="year-month" value="{{endYm}}" start="2020-01" end="2030-12" bindchange="onEndPick" style="display:block">
       <view class="date-pick-btn">{{endYm || '结束月'}}</view>
     </picker>
     <view wx:if="{{startYm || endYm}}" class="date-clear" bindtap="onClearFilter">× 清除</view>

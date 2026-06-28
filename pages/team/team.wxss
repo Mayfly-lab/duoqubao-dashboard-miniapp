@@ -1,11 +1,11 @@
 .role-hint { font-size: 22rpx; color: #6b7280; margin-bottom: 16rpx; }
 
 /* 时间轴日期范围过滤器 */
-.date-filter-row { display: flex; align-items: center; flex-wrap: wrap; margin-bottom: 24rpx; gap: 8rpx; }
-.date-filter-label { font-size: 22rpx; color: #6b7280; margin-right: 4rpx; }
-.date-pick-btn { font-size: 24rpx; color: #5b8cff; background: rgba(91,140,255,.12); padding: 4rpx 18rpx; border-radius: 8rpx; }
-.date-sep { font-size: 22rpx; color: #6b7280; }
-.date-clear { font-size: 22rpx; color: #f06292; background: rgba(240,98,146,.12); padding: 4rpx 14rpx; border-radius: 8rpx; }
+.date-filter-row { display: flex; align-items: center; flex-wrap: wrap; margin-bottom: 24rpx; }
+.date-filter-label { font-size: 22rpx; color: #6b7280; margin-right: 12rpx; }
+.date-pick-btn { font-size: 24rpx; color: #5b8cff; background: rgba(91,140,255,.12); padding: 6rpx 20rpx; border-radius: 8rpx; min-width: 100rpx; text-align: center; }
+.date-sep { font-size: 22rpx; color: #6b7280; margin: 0 10rpx; }
+.date-clear { font-size: 22rpx; color: #f06292; background: rgba(240,98,146,.12); padding: 6rpx 14rpx; border-radius: 8rpx; margin-left: 14rpx; }
 .lc-no-data { font-size: 20rpx; color: #6b7280; padding: 10rpx 0; }
 
 /* 类 */
