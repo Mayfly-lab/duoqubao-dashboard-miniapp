@@ -52,9 +52,11 @@
         <view wx:if="{{pe.expanded}}" class="person-detail">
           <!-- 主责产品回款汇总 -->
           <view wx:if="{{pe.hasPayback}}" class="pe-pb-row">
-            <text class="pe-pb-label">主责回款</text>
+            <text class="pe-pb-label">{{pe.filterActive ? '区间回款' : '主责回款'}}</text>
             <text class="text-green">到账 {{pe.personRealized}}</text>
-            <text class="text-muted"> · 在途 </text><text class="text-blue">{{pe.personPending}}</text>
+            <block wx:if="{{!pe.filterActive}}">
+              <text class="text-muted"> · 在途 </text><text class="text-blue">{{pe.personPending}}</text>
+            </block>
           </view>
           <!-- 产品列表（可展开生命周期） -->
           <view wx:for="{{pe.products}}" wx:for-item="p" wx:key="name" class="prod-item">

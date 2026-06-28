@@ -81,9 +81,15 @@ Page({
   },
 
   render() {
-    const { expandedLine, expandedPerson, expandedProduct } = this.data
+    const { expandedLine, expandedPerson, expandedProduct, startYm, endYm } = this.data
     const pbMap = this._pbMap || {}
     const timelines = this._timelines || {}
+    const hasFilter = !!(startYm || endYm)
+
+    // Sum payout_usd within the selected date range for one product
+    const filteredPayout = name => (timelines[name] || [])
+      .filter(m => (!startYm || m.ym >= startYm) && (!endYm || m.ym <= endYm))
+      .reduce((s, m) => s + api.num(m.payout_usd), 0)
     const lines = this.data._lines.slice().sort((a, b) => b.sales - a.sales)
     const top = lines.length ? Math.max(...lines.map(L => L.sales)) : 1
 
@@ -97,10 +103,13 @@ Page({
           .map(pe => {
             const isPersonExp = pe.name === expandedPerson
 
-            // Per-person payback aggregate (computed cheaply)
+            // Per-person payback aggregate — use date-filtered timeline when filter active
             const ownedNames = pe.products.filter(p => p.role === '主责').map(p => p.name)
-            const peRealized = ownedNames.reduce((s, n) => s + api.num((pbMap[n] || {}).realized_usd), 0)
-            const pePending = ownedNames.reduce((s, n) => s + api.num((pbMap[n] || {}).pending_usd), 0)
+            const peRealized = hasFilter
+              ? ownedNames.reduce((s, n) => s + filteredPayout(n), 0)
+              : ownedNames.reduce((s, n) => s + api.num((pbMap[n] || {}).realized_usd), 0)
+            const pePending = hasFilter ? 0
+              : ownedNames.reduce((s, n) => s + api.num((pbMap[n] || {}).pending_usd), 0)
 
             // Only build product detail for the expanded person
             const products = isPersonExp
@@ -110,17 +119,19 @@ Page({
                   const pb = pbMap[p.name] || {}
                   const hasTimeline = (timelines[p.name] || []).length > 0
                   const hasPayback = api.num(pb.realized_usd) > 0 || api.num(pb.pending_usd) > 0
-                  // Only build heavy data when this product is expanded
-                  const realized = isProductExp ? api.num(pb.realized_usd) : 0
-                  const pending = isProductExp ? api.num(pb.pending_usd) : 0
-                  const locked = isProductExp ? api.num(pb.locked_usd) : 0
+                  // When filter active: realized = filtered timeline sum; pending/locked = all-time
+                  const realized = isProductExp
+                    ? (hasFilter ? filteredPayout(p.name) : api.num(pb.realized_usd))
+                    : 0
+                  const pending = isProductExp && !hasFilter ? api.num(pb.pending_usd) : 0
+                  const locked = isProductExp && !hasFilter ? api.num(pb.locked_usd) : 0
                   return {
                     name: p.name, role: p.role, isOwner: p.role === '主责',
                     key: prodKey, expanded: isProductExp,
                     realized: isProductExp ? fmtMoney(realized) : '',
-                    pending: isProductExp ? fmtMoney(pending) : '',
-                    locked: isProductExp ? fmtMoney(locked) : '',
-                    hasPayback, hasLocked: isProductExp && locked > 0,
+                    pending: isProductExp && !hasFilter ? fmtMoney(pending) : '',
+                    locked: isProductExp && !hasFilter ? fmtMoney(locked) : '',
+                    hasPayback, hasLocked: isProductExp && !hasFilter && locked > 0,
                     timeline: isProductExp ? this._buildTimeline(p.name) : [],
                     hasTimeline,
                   }
@@ -132,6 +143,7 @@ Page({
               ownCount: pe.ownCount, joinCount: pe.joinCount,
               personRealized: fmtMoney(peRealized), personPending: fmtMoney(pePending),
               hasPayback: peRealized > 0 || pePending > 0,
+              filterActive: hasFilter,
               expanded: isPersonExp,
               products,
             }
