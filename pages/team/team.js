@@ -18,7 +18,7 @@ Page({
     generatedAt: api.generatedAt,
     categories: [],
     expandedLine: '', expandedPerson: '', expandedProduct: '',
-    startYm: '', endYm: '',
+    startYm: '', endYm: '', allMonths: [],
     loading: true, error: '', _lines: [],
   },
 
@@ -37,6 +37,11 @@ Page({
       this._pbMap = {}
       paybacks.forEach(p => { this._pbMap[p.local_name] = p })
 
+      // Collect all unique months across all products for the picker
+      const monthSet = new Set()
+      Object.values(timelines).forEach(arr => arr.forEach(m => monthSet.add(m.ym)))
+      this._allMonths = Array.from(monthSet).sort()
+
       const byLine = {}
       compare.forEach(p => {
         const line = lineOf(p.local_name)
@@ -53,7 +58,7 @@ Page({
           if (isOwner) { pe.ownCount++ } else { pe.joinCount++ }
         })
       })
-      this.setData({ _lines: Object.values(byLine), loading: false })
+      this.setData({ _lines: Object.values(byLine), allMonths: this._allMonths, loading: false })
       this.render()
     } catch (e) {
       this.setData({ loading: false, error: '加载失败：' + (e.message || e) })
@@ -145,10 +150,12 @@ Page({
   },
 
   onStartPick(e) {
-    this.setData({ startYm: e.detail.value }, () => this.render())
+    const startYm = this._allMonths[e.detail.value] || ''
+    this.setData({ startYm }, () => this.render())
   },
   onEndPick(e) {
-    this.setData({ endYm: e.detail.value }, () => this.render())
+    const endYm = this._allMonths[e.detail.value] || ''
+    this.setData({ endYm }, () => this.render())
   },
   onClearFilter() {
     this.setData({ startYm: '', endYm: '' }, () => this.render())
