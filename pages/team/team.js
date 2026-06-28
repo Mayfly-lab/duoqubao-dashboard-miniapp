@@ -18,6 +18,7 @@ Page({
     generatedAt: api.generatedAt,
     categories: [],
     expandedLine: '', expandedPerson: '', expandedProduct: '',
+    startYm: '', endYm: '',
     loading: true, error: '', _lines: [],
   },
 
@@ -60,7 +61,11 @@ Page({
   },
 
   _buildTimeline(name) {
-    const months = (this._timelines || {})[name] || []
+    const { startYm, endYm } = this.data
+    let months = (this._timelines || {})[name] || []
+    if (!months.length) return []
+    if (startYm) months = months.filter(m => m.ym >= startYm)
+    if (endYm) months = months.filter(m => m.ym <= endYm)
     if (!months.length) return []
     const maxAbs = Math.max(...months.map(m => Math.abs(api.num(m.payout_usd))), 1)
     return months.map(m => {
@@ -137,6 +142,16 @@ Page({
       }
     })
     this.setData({ categories })
+  },
+
+  onStartPick(e) {
+    this.setData({ startYm: e.detail.value }, () => this.render())
+  },
+  onEndPick(e) {
+    this.setData({ endYm: e.detail.value }, () => this.render())
+  },
+  onClearFilter() {
+    this.setData({ startYm: '', endYm: '' }, () => this.render())
   },
 
   onCatTap(e) {

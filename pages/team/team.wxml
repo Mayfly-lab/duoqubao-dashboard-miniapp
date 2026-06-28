@@ -8,6 +8,19 @@
   <block wx:if="{{!loading && !error}}">
   <view class="role-hint">按产品类看人员 · 数据快照 {{generatedAt}} · 全期累计</view>
 
+  <!-- 时间轴日期范围过滤 -->
+  <view class="date-filter-row">
+    <text class="date-filter-label">时间轴范围</text>
+    <picker mode="year-month" value="{{startYm}}" bindchange="onStartPick">
+      <view class="date-pick-btn">{{startYm || '起始月'}}</view>
+    </picker>
+    <text class="date-sep"> — </text>
+    <picker mode="year-month" value="{{endYm}}" bindchange="onEndPick">
+      <view class="date-pick-btn">{{endYm || '结束月'}}</view>
+    </picker>
+    <view wx:if="{{startYm || endYm}}" class="date-clear" bindtap="onClearFilter">× 清除</view>
+  </view>
+
   <view wx:for="{{categories}}" wx:key="line" class="card">
     <!-- 类 -->
     <view class="cat-head" data-line="{{item.line}}" bindtap="onCatTap">
@@ -63,7 +76,8 @@
               </view>
               <view wx:if="{{p.hasTimeline}}">
                 <view class="lc-chart-title">月度回款时间轴</view>
-                <scroll-view scroll-x class="lc-chart">
+                <view wx:if="{{p.timeline.length === 0}}" class="lc-no-data">该时间段内暂无数据</view>
+                <scroll-view wx:else scroll-x class="lc-chart">
                   <view class="lc-bars">
                     <view wx:for="{{p.timeline}}" wx:for-item="bar" wx:key="ym" class="lc-bar-col">
                       <view class="lc-pos-zone">
