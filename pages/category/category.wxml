@@ -56,7 +56,12 @@
 
     <!-- 欠厂 -->
     <view wx:if="{{level0.owe}}" class="rb-owe">
-      欠供应商尾款 <text class="text-yellow">{{level0.owe}}</text> · 可用已回款支付，无需额外资金
+      <view class="rb-owe-row">
+        <text class="text-muted">采购总额</text><text> {{level0.procTotal}}</text>
+        <text class="text-muted" style="margin-left:20rpx">已付</text><text class="text-green"> {{level0.procPaid}}</text>
+        <text class="text-muted" style="margin-left:20rpx">欠尾款</text><text class="text-yellow"> {{level0.owe}}</text>
+      </view>
+      <view class="rb-owe-note text-muted">可用已回款支付尾款，无需额外资金</view>
     </view>
   </view>
 
