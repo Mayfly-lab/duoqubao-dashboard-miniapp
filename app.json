@@ -30,10 +30,6 @@
       {
         "pagePath": "pages/dailyreport/dailyreport",
         "text": "员工日报"
-      },
-      {
-        "pagePath": "pages/capabilities/capabilities",
-        "text": "服务能力"
       }
     ]
   },
