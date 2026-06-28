@@ -1,6 +1,7 @@
 // 团队管理:产品类 → 类下人员(主责∪参与)→ 个人负责产品 → 产品生命周期时间轴。
 // 组织职责视图:人头上不挂毛利/费用(opex 无产品列·无人字段,拆不到个人)。
 // 个人回款 = 主责产品 payback 汇总；月度时间轴来自 timeline_payout。
+// 性能:只渲染当前展开层的完整数据，避免 setData 超载导致 timeout。
 const api = require('../../utils/api.js')
 const registry = require('../../data/registry.js')
 const { lineOf } = require('../../utils/aggregate.js')
@@ -30,7 +31,7 @@ Page({
         api.allTimelines(),
         api.allPaybacks(),
       ])
-      // Store as instance vars (not reactive) to avoid serialization cost
+      // Instance vars — not reactive, avoids setData cost
       this._timelines = timelines
       this._pbMap = {}
       paybacks.forEach(p => { this._pbMap[p.local_name] = p })
@@ -58,7 +59,6 @@ Page({
     }
   },
 
-  // Build monthly bar chart data for a single product
   _buildTimeline(name) {
     const months = (this._timelines || {})[name] || []
     if (!months.length) return []
@@ -73,60 +73,69 @@ Page({
   render() {
     const { expandedLine, expandedPerson, expandedProduct } = this.data
     const pbMap = this._pbMap || {}
+    const timelines = this._timelines || {}
     const lines = this.data._lines.slice().sort((a, b) => b.sales - a.sales)
     const top = lines.length ? Math.max(...lines.map(L => L.sales)) : 1
 
-    const categories = lines.map(L => ({
-      line: L.line,
-      peopleCount: Object.keys(L.people).length,
-      salesText: fmtMoney(L.sales),
-      profitText: fmtMoney(L.profit),
-      marginPct: L.sales ? (L.profit / L.sales * 100).toFixed(1) : '0.0',
-      loss: L.profit < 0,
-      barWidth: Math.max(4, Math.round(L.sales / top * 100)),
-      expanded: L.line === expandedLine,
-      people: Object.values(L.people)
-        .sort((a, b) => (b.ownCount - a.ownCount) || (b.joinCount - a.joinCount))
-        .map(pe => {
-          const peExpanded = L.line === expandedLine && pe.name === expandedPerson
-          // Aggregate payback across owned products only
-          const ownedNames = pe.products.filter(p => p.role === '主责').map(p => p.name)
-          const peRealized = ownedNames.reduce((s, n) => s + api.num((pbMap[n] || {}).realized_usd), 0)
-          const pePending = ownedNames.reduce((s, n) => s + api.num((pbMap[n] || {}).pending_usd), 0)
-          return {
-            name: pe.name,
-            pcount: pe.products.length,
-            ownCount: pe.ownCount,
-            joinCount: pe.joinCount,
-            personRealized: fmtMoney(peRealized),
-            personPending: fmtMoney(pePending),
-            hasPayback: peRealized > 0 || pePending > 0,
-            expanded: peExpanded,
-            products: pe.products.slice().sort((a, b) => b.sales - a.sales).map(p => {
-              const prodKey = `${L.line}:${pe.name}:${p.name}`
-              const pb = pbMap[p.name] || {}
-              const realized = api.num(pb.realized_usd)
-              const pending = api.num(pb.pending_usd)
-              const locked = api.num(pb.locked_usd)
-              const timeline = this._buildTimeline(p.name)
-              return {
-                name: p.name,
-                role: p.role,
-                isOwner: p.role === '主责',
-                key: prodKey,
-                expanded: prodKey === expandedProduct,
-                realized: fmtMoney(realized),
-                pending: fmtMoney(pending),
-                locked: fmtMoney(locked),
-                hasPayback: realized > 0 || pending > 0,
-                hasLocked: locked > 0,
-                timeline,
-                hasTimeline: timeline.length > 0,
-              }
-            }),
-          }
-        }),
-    }))
+    const categories = lines.map(L => {
+      const isLineExp = L.line === expandedLine
+
+      // Only build people list for the expanded category
+      const people = isLineExp
+        ? Object.values(L.people)
+          .sort((a, b) => (b.ownCount - a.ownCount) || (b.joinCount - a.joinCount))
+          .map(pe => {
+            const isPersonExp = pe.name === expandedPerson
+
+            // Per-person payback aggregate (computed cheaply)
+            const ownedNames = pe.products.filter(p => p.role === '主责').map(p => p.name)
+            const peRealized = ownedNames.reduce((s, n) => s + api.num((pbMap[n] || {}).realized_usd), 0)
+            const pePending = ownedNames.reduce((s, n) => s + api.num((pbMap[n] || {}).pending_usd), 0)
+
+            // Only build product detail for the expanded person
+            const products = isPersonExp
+              ? pe.products.slice().sort((a, b) => b.sales - a.sales).map(p => {
+                  const prodKey = `${L.line}:${pe.name}:${p.name}`
+                  const isProductExp = prodKey === expandedProduct
+                  const pb = pbMap[p.name] || {}
+                  const hasTimeline = (timelines[p.name] || []).length > 0
+                  const hasPayback = api.num(pb.realized_usd) > 0 || api.num(pb.pending_usd) > 0
+                  // Only build heavy data when this product is expanded
+                  const realized = isProductExp ? api.num(pb.realized_usd) : 0
+                  const pending = isProductExp ? api.num(pb.pending_usd) : 0
+                  const locked = isProductExp ? api.num(pb.locked_usd) : 0
+                  return {
+                    name: p.name, role: p.role, isOwner: p.role === '主责',
+                    key: prodKey, expanded: isProductExp,
+                    realized: isProductExp ? fmtMoney(realized) : '',
+                    pending: isProductExp ? fmtMoney(pending) : '',
+                    locked: isProductExp ? fmtMoney(locked) : '',
+                    hasPayback, hasLocked: isProductExp && locked > 0,
+                    timeline: isProductExp ? this._buildTimeline(p.name) : [],
+                    hasTimeline,
+                  }
+                })
+              : []
+
+            return {
+              name: pe.name, pcount: pe.products.length,
+              ownCount: pe.ownCount, joinCount: pe.joinCount,
+              personRealized: fmtMoney(peRealized), personPending: fmtMoney(pePending),
+              hasPayback: peRealized > 0 || pePending > 0,
+              expanded: isPersonExp,
+              products,
+            }
+          })
+        : []
+
+      return {
+        line: L.line, peopleCount: Object.keys(L.people).length,
+        salesText: fmtMoney(L.sales), profitText: fmtMoney(L.profit),
+        marginPct: L.sales ? (L.profit / L.sales * 100).toFixed(1) : '0.0',
+        loss: L.profit < 0, barWidth: Math.max(4, Math.round(L.sales / top * 100)),
+        expanded: isLineExp, people,
+      }
+    })
     this.setData({ categories })
   },
 
