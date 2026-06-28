@@ -5,13 +5,15 @@
   padding: 2rpx 12rpx; margin-left: 14rpx; vertical-align: middle;
 }
 
-/* 小指标网格(类KPI / 广告 / 退款 / 弹药) */
+/* 小指标网格(类KPI / 广告 / 退款 / 库存) */
 .ph-grid { display: flex; flex-wrap: wrap; margin: -7rpx; }
 .ph-item {
   flex: 1 1 140rpx; min-width: 140rpx; margin: 7rpx; box-sizing: border-box;
   background: #0f1729; border: 1rpx solid #2c3a5c;
   border-radius: 14rpx; padding: 20rpx;
 }
+/* 强制2列：用于顶部KPI四格，避免4格挤一行 */
+.ph-grid-2col .ph-item { flex: 1 1 44%; min-width: 44%; }
 .ph-num { font-size: 34rpx; font-weight: 700; color: #eef2fb; }
 .ph-lab { font-size: 20rpx; color: #94a3c4; margin-top: 6rpx; }
 

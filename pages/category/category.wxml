@@ -6,7 +6,7 @@
   <!-- 类整体 + 回款 -->
   <view class="card">
     <view class="cat-title">{{line}}<text class="cat-tag">{{models.length}} 型号</text></view>
-    <view class="ph-grid">
+    <view class="ph-grid ph-grid-2col">
       <view class="ph-item"><view class="ph-num text-blue">{{kpi.salesText}}</view><view class="ph-lab">销售额</view></view>
       <view class="ph-item"><view class="ph-num {{kpi.loss ? 'text-pink' : 'text-green'}}">{{kpi.profitText}}</view><view class="ph-lab">毛利 {{kpi.marginPct}}%</view></view>
       <view class="ph-item"><view class="ph-num text-green">{{kpi.realizedText}}</view><view class="ph-lab">已到账</view></view>
