@@ -41,9 +41,9 @@
     </view>
   </view>
 
-  <!-- 库存弹药 -->
+  <!-- 库存状况 -->
   <view wx:if="{{inventory}}" class="card">
-    <view class="card-title">库存弹药</view>
+    <view class="card-title">库存状况</view>
     <view class="ph-grid">
       <view class="ph-item"><view class="ph-num">{{inventory.xianhuo}}</view><view class="ph-lab">现货</view></view>
       <view class="ph-item"><view class="ph-num">{{inventory.zaitu}}</view><view class="ph-lab">在途</view></view>
