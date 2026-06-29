@@ -48,15 +48,12 @@
           </view>
         </view>
 
-        <!-- 个人:产品清单 + 回款汇总 + 月度生命周期 -->
+        <!-- 个人:产品清单 + 利润汇总 + 月度生命周期 -->
         <view wx:if="{{pe.expanded}}" class="person-detail">
-          <!-- 主责产品回款汇总 -->
-          <view wx:if="{{pe.hasPayback}}" class="pe-pb-row">
-            <text class="pe-pb-label">{{pe.filterActive ? '区间回款' : '主责回款'}}</text>
-            <text class="text-green">到账 {{pe.personRealized}}</text>
-            <block wx:if="{{!pe.filterActive}}">
-              <text class="text-muted"> · 在途 </text><text class="text-blue">{{pe.personPending}}</text>
-            </block>
+          <!-- 主责产品利润汇总 -->
+          <view wx:if="{{pe.hasProfit}}" class="pe-pb-row">
+            <text class="pe-pb-label">主责毛利</text>
+            <text class="{{pe.personLoss ? 'text-pink' : 'text-green'}}">{{pe.personProfitText}}</text>
           </view>
           <!-- 产品列表（可展开生命周期） -->
           <view wx:for="{{pe.products}}" wx:for-item="p" wx:key="name" class="prod-item">
@@ -68,36 +65,27 @@
                   <text class="prod-profit {{p.loss ? 'text-pink' : 'text-green'}}"> · {{p.profitText}}</text>
                 </view>
                 <text class="prod-role {{p.isOwner ? 'role-own' : 'role-join'}}">{{p.role}}</text>
-                <text wx:if="{{p.hasTimeline || p.hasPayback}}" class="prod-expand-arrow">{{p.expanded ? '▲' : '▼'}}</text>
+                <text wx:if="{{p.hasProfitTimeline}}" class="prod-expand-arrow">{{p.expanded ? '▲' : '▼'}}</text>
               </view>
             </view>
-            <!-- 产品展开：回款明细 + 月度时间轴 -->
-            <view wx:if="{{p.expanded && (p.hasPayback || p.hasTimeline)}}" class="prod-lifecycle">
-              <view wx:if="{{p.hasPayback}}" class="lc-pb-row">
-                <text class="lc-pb-item"><text class="text-muted">到账 </text><text class="text-green">{{p.realized}}</text></text>
-                <text class="lc-pb-sep"> · </text>
-                <text class="lc-pb-item"><text class="text-muted">在途 </text><text class="text-blue">{{p.pending}}</text></text>
-                <text wx:if="{{p.hasLocked}}" class="lc-pb-sep"> · </text>
-                <text wx:if="{{p.hasLocked}}" class="lc-pb-item"><text class="text-muted">锁定 </text><text class="text-yellow">{{p.locked}}</text></text>
-              </view>
-              <view wx:if="{{p.hasTimeline}}">
-                <view class="lc-chart-title">月度回款时间轴</view>
-                <view wx:if="{{p.timeline.length === 0}}" class="lc-no-data">该时间段内暂无数据</view>
-                <scroll-view wx:else scroll-x class="lc-chart">
-                  <view class="lc-bars">
-                    <view wx:for="{{p.timeline}}" wx:for-item="bar" wx:key="ym" class="lc-bar-col">
-                      <view class="lc-pos-zone">
-                        <view wx:if="{{bar.posH > 0}}" class="lc-bar-pos" style="height:{{bar.posH}}rpx"></view>
-                      </view>
-                      <view class="lc-zero"></view>
-                      <view class="lc-neg-zone">
-                        <view wx:if="{{bar.negH > 0}}" class="lc-bar-neg" style="height:{{bar.negH}}rpx"></view>
-                      </view>
-                      <view class="lc-bar-label">{{bar.label}}</view>
+            <!-- 产品展开：月度利润时间轴 -->
+            <view wx:if="{{p.expanded && p.hasProfitTimeline}}" class="prod-lifecycle">
+              <view class="lc-chart-title">月度利润时间轴</view>
+              <view wx:if="{{p.profitTimeline.length === 0}}" class="lc-no-data">该时间段内暂无数据</view>
+              <scroll-view wx:else scroll-x class="lc-chart">
+                <view class="lc-bars">
+                  <view wx:for="{{p.profitTimeline}}" wx:for-item="bar" wx:key="ym" class="lc-bar-col">
+                    <view class="lc-pos-zone">
+                      <view wx:if="{{bar.posH > 0}}" class="lc-bar-pos" style="height:{{bar.posH}}rpx"></view>
                     </view>
+                    <view class="lc-zero"></view>
+                    <view class="lc-neg-zone">
+                      <view wx:if="{{bar.negH > 0}}" class="lc-bar-neg" style="height:{{bar.negH}}rpx"></view>
+                    </view>
+                    <view class="lc-bar-label">{{bar.label}}</view>
                   </view>
-                </scroll-view>
-              </view>
+                </view>
+              </scroll-view>
             </view>
           </view>
         </view>
@@ -106,5 +94,5 @@
   </view>
   </block>
 
-  <view class="foot-note">销售/毛利：领星日粒度按月聚合（monthly_sales）· 无筛选=全期 · 回款来自 Amazon payback · 数据快照 {{generatedAt}}</view>
+  <view class="foot-note">销售/毛利：领星日粒度按月聚合（monthly_sales）· 无筛选=全期 · 数据快照 {{generatedAt}}</view>
 </view>
