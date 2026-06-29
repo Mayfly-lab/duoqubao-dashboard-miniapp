@@ -101,8 +101,10 @@ Page({
           { label: '已到账', val: fmtWan(realizedCny), w: seg(realizedCny), cls: 'seg-realized' },
           { label: '在途待回', val: fmtWan(pendingCny), w: seg(pendingCny), cls: 'seg-pending' },
         ],
-        owe: fmtWan(proc.outstanding),   // 欠厂应付(账期红利,提示用)
-        buyYear: proc.year || '—',       // 活跃代年份
+        owe: fmtWan(proc.outstanding),
+        procTotal: fmtWan(proc.amount),
+        procPaid: fmtWan(proc.paid),
+        buyYear: proc.year || '—',
         procMissing: proc.amount === 0,  // 采购未归集(大杂烩/特殊线,金蝶名拆不到本类)→ 不显示误导的回本%
       }
 

@@ -58,6 +58,18 @@ ORDER BY ym
 """
 
 
+def sql(query):
+    url = BASE + "/query/sql?db=lingxing"
+    body = json.dumps({"sql": query}).encode()
+    req = urllib.request.Request(url, data=body, headers={"X-API-Key": KEY, "Content-Type": "application/json"})
+    try:
+        with urllib.request.urlopen(req, timeout=70) as r:
+            return json.loads(r.read()).get("data", [])
+    except Exception as e:
+        print("  ! SQL FAIL", str(e)[:80], flush=True)
+        return []
+
+
 def main():
     snap = {}
     print("== 全量接口（空 name 一次拿全部）==", flush=True)
@@ -98,6 +110,59 @@ def main():
     snap["timeline_payout"] = timeline
     snap["opex"] = opex
     snap["quality_reasons_by"] = reasons
+
+    print("== 日报 + 运营行动 ==", flush=True)
+    # 日报：取最近 30 条，逐条补全 full_content
+    reports_list = get("/feishu/reports", {"module": "daily_report", "limit": 30})
+    reports_full = []
+    seen_dates = set()
+    for r in reports_list:
+        # 日报按用户多条推送同内容，按 feishu_msg_id 去重只保留每天一条
+        mid = r.get("feishu_msg_id", r["id"])
+        if mid in seen_dates:
+            continue
+        seen_dates.add(mid)
+        url = BASE + f"/feishu/reports/{r['id']}"
+        req = urllib.request.Request(url, headers={"X-API-Key": KEY})
+        try:
+            with urllib.request.urlopen(req, timeout=30) as resp:
+                detail = json.loads(resp.read())
+            r["full_content"] = detail.get("full_content") or detail.get("data", {}).get("full_content") or {}
+        except Exception as e:
+            print(f"  ! report {r['id']} full_content FAIL: {e}", flush=True)
+            r["full_content"] = {}
+        # 只保留 UI 用到的字段，大幅缩减包体 (raw_rows 等 ~1.2 MB 完全未用)
+        KEEP_FC = {'date', 'USD_总销售额', '回款_USD', '毛利润_USD'}
+        r["full_content"] = {k: v for k, v in r.get("full_content", {}).items() if k in KEEP_FC}
+        reports_full.append(r)
+    snap["daily_reports"] = reports_full
+    print(f"  daily_reports: {len(reports_full)} 条（去重后）", flush=True)
+
+    # 运营行动：最近 14 天（大 limit 一次拿完，避免单日量多被截断）
+    import datetime
+    since = (datetime.date.today() - datetime.timedelta(days=14)).isoformat()
+    raw_checkins = get("/checkin", {"since": since, "limit": 2000})
+    # 只保留 UI 用到的字段，去除 action_id/date_ms/source/open_id 等冗余字段
+    KEEP_CA = {'name', 'date', 'created_at', 'category', 'summary', 'description', 'follow_up', 'product'}
+    snap["checkin_actions"] = [{k: v for k, v in c.items() if k in KEEP_CA} for c in raw_checkins]
+    print(f"  checkin_actions: {len(snap['checkin_actions'])} 行", flush=True)
+
+    # 月度销售（按产品×月聚合，用于前端日期筛选后显示销售/毛利趋势）
+    print("== 月度销售（SQL GROUP BY）==", flush=True)
+    monthly_rows = sql(
+        "SELECT local_name, strftime('%Y-%m', data_date) as ym, "
+        "SUM(amount) as sales, SUM(gross_profit) as profit, SUM(volume) as units "
+        "FROM order_profit_msku "
+        "WHERE data_date >= '2025-06-01' AND local_name != '' "
+        "GROUP BY local_name, ym ORDER BY local_name, ym"
+    )
+    snap["monthly_sales"] = [
+        {"n": r["local_name"], "ym": r["ym"],
+         "s": float(r["sales"] or 0), "p": float(r["profit"] or 0), "u": int(float(r["units"] or 0))}
+        for r in monthly_rows
+    ]
+    print(f"  monthly_sales: {len(snap['monthly_sales'])} 行（产品×月）", flush=True)
+
     snap["_generated"] = time.strftime("%Y-%m-%d %H:%M")
 
     with open(OUT, "w", encoding="utf-8") as f:

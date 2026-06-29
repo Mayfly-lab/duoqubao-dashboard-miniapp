@@ -1,0 +1,71 @@
+<view class="container">
+
+  <view wx:if="{{loading}}" class="card">加载中…</view>
+  <view wx:if="{{error}}" class="card" style="color:#f06292">{{error}}</view>
+
+  <block wx:if="{{!loading && !error}}">
+
+  <!-- 顶部：日期选择 -->
+  <view class="dr-header">
+    <view class="dr-title">员工日报</view>
+    <picker mode="selector" range="{{dates}}" value="{{selectedIdx}}" bindchange="onDatePick">
+      <view class="date-pick-btn">{{dates[selectedIdx] || '选日期'}} ▾</view>
+    </picker>
+  </view>
+  <view class="role-hint">快照 {{generatedAt}} · 近14天运营行动</view>
+
+  <!-- 无数据提示 -->
+  <view wx:if="{{!employees.length && !kpi}}" class="card" style="color:#6b7280;text-align:center">
+    该日期暂无员工提交记录
+  </view>
+
+  <!-- 员工提交内容 -->
+  <view wx:for="{{employees}}" wx:key="name" class="card">
+    <view class="emp-header">
+      <text class="emp-name">{{item.name}}</text>
+      <view class="emp-badges">
+        <text class="emp-badge">{{item.count}} 条</text>
+        <text wx:if="{{item.pendingCount}}" class="emp-badge emp-badge-pending">{{item.pendingCount}} 待跟进</text>
+      </view>
+    </view>
+    <view wx:for="{{item.actions}}" wx:for-item="a" wx:key="summary" class="action-item">
+      <view class="action-head">
+        <text class="action-cat">{{a.category}}</text>
+        <text class="action-fu {{a.follow_up === '已闭环' ? 'fu-done' : a.follow_up === '待跟进' ? 'fu-pending' : 'fu-none'}}">{{a.follow_up}}</text>
+      </view>
+      <view class="action-summary">{{a.summary}}</view>
+      <view wx:if="{{a.description && a.description !== a.summary}}" class="action-desc">{{a.description}}</view>
+      <view wx:if="{{a.product}}" class="action-product">产品：{{a.product}}</view>
+    </view>
+  </view>
+
+  <!-- 公司指标（折叠） -->
+  <view wx:if="{{kpi}}" class="card kpi-collapse" bindtap="onToggleKpi">
+    <view class="kpi-collapse-head">
+      <text class="section-title">当日公司指标</text>
+      <text class="collapse-arrow">{{kpiExpanded ? '▲' : '▼'}}</text>
+    </view>
+    <view wx:if="{{kpiExpanded}}" class="kpi-grid">
+      <view class="kpi-item">
+        <view class="kpi-label">总销售额</view>
+        <view class="kpi-val">{{kpi.sales}}</view>
+      </view>
+      <view class="kpi-item">
+        <view class="kpi-label">回款</view>
+        <view class="kpi-val text-blue">{{kpi.payback}}</view>
+      </view>
+      <view class="kpi-item">
+        <view class="kpi-label">毛利润</view>
+        <view class="kpi-val {{kpi.profitLoss ? 'text-pink' : 'text-green'}}">{{kpi.profit}}</view>
+      </view>
+      <view class="kpi-item">
+        <view class="kpi-label">利润率</view>
+        <view class="kpi-val {{kpi.profitLoss ? 'text-pink' : 'text-green'}}">{{kpi.profitPct}}%</view>
+      </view>
+    </view>
+  </view>
+
+  </block>
+
+  <view class="foot-note">数据：运营 checkin 行动 + 飞书日报 · 快照 {{generatedAt}}</view>
+</view>
