@@ -1,6 +1,6 @@
-// 团队管理:产品类 → 类下人员(主责∪参与)→ 个人负责产品 → 产品生命周期时间轴。
-// 组织职责视图:人头上不挂毛利/费用(opex 无产品列·无人字段,拆不到个人)。
-// 个人回款 = 主责产品 payback 汇总；月度时间轴来自 timeline_payout。
+// 团队管理:产品类 → 类下人员(主责∪参与)→ 个人负责产品 → 产品利润时间轴。
+// 组织职责视图:人头上显示主责毛利（P&L，与类/产品层级口径一致）。
+// 个人毛利 = 主责产品 profit 汇总；月度时间轴来自 monthly_sales（P&L）。
 // 日期筛选:月度销售额/毛利来自 monthly_sales（领星日粒度聚合到月）。
 const api = require('../../utils/api.js')
 const registry = require('../../data/registry.js')
@@ -81,32 +81,27 @@ Page({
       .reduce((acc, m) => ({ s: acc.s + m.s, p: acc.p + m.p }), { s: 0, p: 0 })
   },
 
-  _buildTimeline(name) {
+  _buildProfitTimeline(name) {
     const { startYm, endYm } = this.data
     const inRange = ym => (!startYm || ym >= startYm) && (!endYm || ym <= endYm)
-    // 已到账(实·v_payout_breakdown) + 在途预计到账(timeline_pending,未来~1-2月),堆叠柱
-    const actual = {}, pend = {}
-    ;((this._timelines || {})[name] || []).forEach(m => { if (inRange(m.ym)) actual[m.ym] = api.num(m.payout_usd) })
-    ;((this._pendingTimelines || {})[name] || []).forEach(m => { if (inRange(m.ym)) pend[m.ym] = (pend[m.ym] || 0) + api.num(m.pending_usd) })
-    const yms = [...new Set([...Object.keys(actual), ...Object.keys(pend)])].sort()
+    const profit = {}
+    ;((this._monthlySales || {})[name] || []).forEach(m => { if (inRange(m.ym)) profit[m.ym] = m.p || 0 })
+    const yms = Object.keys(profit).sort()
     if (!yms.length) return null
-    const k = v => Math.round((v || 0) / 100) / 10   // → $千(k),1 位小数;uCharts opts 不能带函数,故预先换单位
+    const k = v => Math.round((v || 0) / 100) / 10   // → $千(k),1 位小数
     return {
       type: 'column',
-      categories: yms.map(y => y.slice(2)),           // 25-06
+      categories: yms.map(y => y.slice(2)),
       series: [
-        { name: '已到账', data: yms.map(y => k(actual[y])), color: '#2b6cff' },
-        { name: '在途·预计', data: yms.map(y => k(pend[y])), color: '#18b888' },
+        { name: '月度利润', data: yms.map(y => k(profit[y])), color: '#18b888' },
       ],
-      background: '#ffffff',                           // 领星浅色图表
+      background: '#ffffff',
       fontSize: 9,
       padding: [14, 12, 0, 6],
-      legend: { show: true, fontColor: '#9aa6bc', fontSize: 9, padding: 4 },
-      // disableGrid 去竖网格线;rotateLabel:false 日期摆正(配合 itemCount+滚动不挤)
-      xAxis: { disableGrid: true, fontColor: '#9aa6bc', fontSize: 9, axisLineColor: '#edf0f5', rotateLabel: false, itemCount: 6, scrollShow: yms.length > 6, scrollPosition: 'right', scrollColor: '#2b6cff', scrollBackgroundColor: '#eef1f6' },
+      legend: { show: false },
+      xAxis: { disableGrid: true, fontColor: '#9aa6bc', fontSize: 9, axisLineColor: '#edf0f5', rotateLabel: false, itemCount: 6, scrollShow: yms.length > 6, scrollPosition: 'right', scrollColor: '#18b888', scrollBackgroundColor: '#eef1f6' },
       yAxis: { gridType: 'dash', dashLength: 3, fontColor: '#9aa6bc', fontSize: 9, gridColor: '#edf0f5', splitNumber: 4 },
-      // group=分组并排(支持负值);linearType:opacity 做领星渐变蓝柱(上深下浅);圆角
-      extra: { column: { type: 'group', width: 12, seriesGap: 2, barBorderRadius: [4, 4, 0, 0], linearType: 'opacity', linearOpacity: 0.3, activeBgColor: '#000', activeBgOpacity: 0.04 }, tooltip: { showBox: true, bgColor: '#1f2a3c', fontColor: '#ffffff' } },
+      extra: { column: { type: 'group', width: 14, barBorderRadius: [4, 4, 0, 0], linearType: 'opacity', linearOpacity: 0.3, activeBgColor: '#000', activeBgOpacity: 0.04 }, tooltip: { showBox: true, bgColor: '#1f2a3c', fontColor: '#ffffff' } },
       enableScroll: yms.length > 6,
       dataLabel: false, animation: true,
     }
@@ -114,14 +109,7 @@ Page({
 
   render() {
     const { expandedLine, expandedPerson, expandedProduct, startYm, endYm } = this.data
-    const pbMap = this._pbMap || {}
-    const timelines = this._timelines || {}
     const hasFilter = !!(startYm || endYm)
-
-    // Sum payout_usd within the selected date range for one product (for payback display)
-    const filteredPayout = name => (timelines[name] || [])
-      .filter(m => (!startYm || m.ym >= startYm) && (!endYm || m.ym <= endYm))
-      .reduce((s, m) => s + api.num(m.payout_usd), 0)
 
     const lines = this.data._lines.slice().sort((a, b) => b.sales - a.sales)
     const top = lines.length ? Math.max(...lines.map(L => {
@@ -149,46 +137,32 @@ Page({
           .map(pe => {
             const isPersonExp = pe.name === expandedPerson
 
-            // Per-person payback — use date-filtered timeline when filter active
-            const ownedNames = pe.products.filter(p => p.role === '主责').map(p => p.name)
-            const peRealized = hasFilter
-              ? ownedNames.reduce((s, n) => s + filteredPayout(n), 0)
-              : ownedNames.reduce((s, n) => s + api.num((pbMap[n] || {}).realized_usd), 0)
-            const pePending = hasFilter ? 0
-              : ownedNames.reduce((s, n) => s + api.num((pbMap[n] || {}).pending_usd), 0)
+            // Per-person profit — sum owned products' P&L (consistent with category/product levels)
+            const ownedProds = pe.products.filter(p => p.role === '主责')
+            const peProfit = hasFilter
+              ? ownedProds.reduce((s, p) => s + this._filteredSales(p.name).p, 0)
+              : ownedProds.reduce((s, p) => s + p.profit, 0)
 
             // Only build product detail for the expanded person
             const products = isPersonExp
               ? pe.products.slice().sort((a, b) => b.sales - a.sales).map(p => {
                   const prodKey = `${L.line}:${pe.name}:${p.name}`
                   const isProductExp = prodKey === expandedProduct
-                  const pb = pbMap[p.name] || {}
-                  const hasTimeline = ((timelines[p.name] || []).length > 0) || (((this._pendingTimelines || {})[p.name] || []).length > 0)
-                  const hasPayback = api.num(pb.realized_usd) > 0 || api.num(pb.pending_usd) > 0
+                  const hasProfitTimeline = ((this._monthlySales || {})[p.name] || []).length > 0
 
                   // Product sales/profit: use monthly_sales when filter active
                   const fs = hasFilter ? this._filteredSales(p.name) : null
                   const prodSales = hasFilter ? fs.s : p.sales
                   const prodProfit = hasFilter ? fs.p : p.profit
 
-                  // Payback (for expanded product card)
-                  const realized = isProductExp
-                    ? (hasFilter ? filteredPayout(p.name) : api.num(pb.realized_usd))
-                    : 0
-                  const pending = isProductExp && !hasFilter ? api.num(pb.pending_usd) : 0
-                  const locked = isProductExp && !hasFilter ? api.num(pb.locked_usd) : 0
                   return {
                     name: p.name, role: p.role, isOwner: p.role === '主责',
                     key: prodKey, expanded: isProductExp,
                     salesText: fmtMoney(prodSales),
                     profitText: fmtMoney(prodProfit),
                     loss: prodProfit < 0,
-                    realized: isProductExp ? fmtMoney(realized) : '',
-                    pending: isProductExp && !hasFilter ? fmtMoney(pending) : '',
-                    locked: isProductExp && !hasFilter ? fmtMoney(locked) : '',
-                    hasPayback, hasLocked: isProductExp && !hasFilter && locked > 0,
-                    chartOpts: isProductExp ? this._buildTimeline(p.name) : null,
-                    hasTimeline,
+                    chartOpts: isProductExp ? this._buildProfitTimeline(p.name) : null,
+                    hasProfitTimeline,
                   }
                 })
               : []
@@ -196,9 +170,9 @@ Page({
             return {
               name: pe.name, pcount: pe.products.length,
               ownCount: pe.ownCount, joinCount: pe.joinCount,
-              personRealized: fmtMoney(peRealized), personPending: fmtMoney(pePending),
-              hasPayback: peRealized > 0 || pePending > 0,
-              filterActive: hasFilter,
+              personProfitText: fmtMoney(peProfit),
+              personLoss: peProfit < 0,
+              hasProfit: ownedProds.length > 0,
               expanded: isPersonExp,
               products,
             }
