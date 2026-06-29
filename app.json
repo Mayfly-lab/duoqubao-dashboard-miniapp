@@ -10,10 +10,10 @@
     "pages/dailyreport/dailyreport"
   ],
   "tabBar": {
-    "color": "#94a3c4",
-    "selectedColor": "#5b8cff",
-    "backgroundColor": "#19233c",
-    "borderStyle": "black",
+    "color": "#8a93a0",
+    "selectedColor": "#2b6cff",
+    "backgroundColor": "#ffffff",
+    "borderStyle": "white",
     "list": [
       {
         "pagePath": "pages/finance/finance",
@@ -35,10 +35,10 @@
   },
   "window": {
     "backgroundTextStyle": "dark",
-    "navigationBarBackgroundColor": "#0f1729",
+    "navigationBarBackgroundColor": "#ffffff",
     "navigationBarTitleText": "多趣猫 AI 服务",
-    "navigationBarTextStyle": "white",
-    "backgroundColor": "#0f1729"
+    "navigationBarTextStyle": "black",
+    "backgroundColor": "#f4f6f9"
   },
   "style": "v2",
   "sitemapLocation": "sitemap.json"

@@ -30,13 +30,15 @@ Page({
   async fetch() {
     this.setData({ loading: true, error: '' })
     try {
-      const [compare, timelines, paybacks, monthlySales] = await Promise.all([
+      const [compare, timelines, pendingTimelines, paybacks, monthlySales] = await Promise.all([
         api.projectsCompare(),
         api.allTimelines(),
+        api.allPendingTimelines(),
         api.allPaybacks(),
         api.monthlySalesByProduct(),
       ])
       this._timelines = timelines
+      this._pendingTimelines = pendingTimelines
       this._monthlySales = monthlySales
       this._pbMap = {}
       paybacks.forEach(p => { this._pbMap[p.local_name] = p })
@@ -81,17 +83,33 @@ Page({
 
   _buildTimeline(name) {
     const { startYm, endYm } = this.data
-    let months = (this._timelines || {})[name] || []
-    if (!months.length) return []
-    if (startYm) months = months.filter(m => m.ym >= startYm)
-    if (endYm) months = months.filter(m => m.ym <= endYm)
-    if (!months.length) return []
-    const maxAbs = Math.max(...months.map(m => Math.abs(api.num(m.payout_usd))), 1)
-    return months.map(m => {
-      const v = api.num(m.payout_usd)
-      const h = Math.round(Math.abs(v) / maxAbs * 52)
-      return { ym: m.ym, label: m.ym.slice(5), positive: v >= 0, posH: v >= 0 ? h : 0, negH: v < 0 ? h : 0 }
-    })
+    const inRange = ym => (!startYm || ym >= startYm) && (!endYm || ym <= endYm)
+    // 已到账(实·v_payout_breakdown) + 在途预计到账(timeline_pending,未来~1-2月),堆叠柱
+    const actual = {}, pend = {}
+    ;((this._timelines || {})[name] || []).forEach(m => { if (inRange(m.ym)) actual[m.ym] = api.num(m.payout_usd) })
+    ;((this._pendingTimelines || {})[name] || []).forEach(m => { if (inRange(m.ym)) pend[m.ym] = (pend[m.ym] || 0) + api.num(m.pending_usd) })
+    const yms = [...new Set([...Object.keys(actual), ...Object.keys(pend)])].sort()
+    if (!yms.length) return null
+    const k = v => Math.round((v || 0) / 100) / 10   // → $千(k),1 位小数;uCharts opts 不能带函数,故预先换单位
+    return {
+      type: 'column',
+      categories: yms.map(y => y.slice(2)),           // 25-06
+      series: [
+        { name: '已到账', data: yms.map(y => k(actual[y])), color: '#2b6cff' },
+        { name: '在途·预计', data: yms.map(y => k(pend[y])), color: '#18b888' },
+      ],
+      background: '#ffffff',                           // 领星浅色图表
+      fontSize: 9,
+      padding: [14, 12, 0, 6],
+      legend: { show: true, fontColor: '#9aa6bc', fontSize: 9, padding: 4 },
+      // disableGrid 去竖网格线;rotateLabel:false 日期摆正(配合 itemCount+滚动不挤)
+      xAxis: { disableGrid: true, fontColor: '#9aa6bc', fontSize: 9, axisLineColor: '#edf0f5', rotateLabel: false, itemCount: 6, scrollShow: yms.length > 6, scrollPosition: 'right', scrollColor: '#2b6cff', scrollBackgroundColor: '#eef1f6' },
+      yAxis: { gridType: 'dash', dashLength: 3, fontColor: '#9aa6bc', fontSize: 9, gridColor: '#edf0f5', splitNumber: 4 },
+      // group=分组并排(支持负值);linearType:opacity 做领星渐变蓝柱(上深下浅);圆角
+      extra: { column: { type: 'group', width: 12, seriesGap: 2, barBorderRadius: [4, 4, 0, 0], linearType: 'opacity', linearOpacity: 0.3, activeBgColor: '#000', activeBgOpacity: 0.04 }, tooltip: { showBox: true, bgColor: '#1f2a3c', fontColor: '#ffffff' } },
+      enableScroll: yms.length > 6,
+      dataLabel: false, animation: true,
+    }
   },
 
   render() {
@@ -145,7 +163,7 @@ Page({
                   const prodKey = `${L.line}:${pe.name}:${p.name}`
                   const isProductExp = prodKey === expandedProduct
                   const pb = pbMap[p.name] || {}
-                  const hasTimeline = (timelines[p.name] || []).length > 0
+                  const hasTimeline = ((timelines[p.name] || []).length > 0) || (((this._pendingTimelines || {})[p.name] || []).length > 0)
                   const hasPayback = api.num(pb.realized_usd) > 0 || api.num(pb.pending_usd) > 0
 
                   // Product sales/profit: use monthly_sales when filter active
@@ -169,7 +187,7 @@ Page({
                     pending: isProductExp && !hasFilter ? fmtMoney(pending) : '',
                     locked: isProductExp && !hasFilter ? fmtMoney(locked) : '',
                     hasPayback, hasLocked: isProductExp && !hasFilter && locked > 0,
-                    timeline: isProductExp ? this._buildTimeline(p.name) : [],
+                    chartOpts: isProductExp ? this._buildTimeline(p.name) : null,
                     hasTimeline,
                   }
                 })

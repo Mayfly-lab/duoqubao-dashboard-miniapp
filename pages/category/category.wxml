@@ -1,6 +1,6 @@
 <view class="container">
   <view wx:if="{{loading}}" class="card">加载中…</view>
-  <view wx:if="{{error}}" class="card" style="color:#f06292">{{error}}</view>
+  <view wx:if="{{error}}" class="card" style="color:#f5455c">{{error}}</view>
 
   <block wx:if="{{!loading && !error}}">
   <!-- 类整体 + 回款 -->

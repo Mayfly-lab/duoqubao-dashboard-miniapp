@@ -1,7 +1,7 @@
 <view class="container">
 
   <view wx:if="{{loading}}" class="card">加载中…</view>
-  <view wx:if="{{error}}" class="card" style="color:#f06292">{{error}}</view>
+  <view wx:if="{{error}}" class="card" style="color:#f5455c">{{error}}</view>
 
   <block wx:if="{{!loading && !error}}">
 
@@ -15,17 +15,18 @@
   <view class="role-hint">快照 {{generatedAt}} · 近14天运营行动</view>
 
   <!-- 无数据提示 -->
-  <view wx:if="{{!employees.length && !kpi}}" class="card" style="color:#6b7280;text-align:center">
+  <view wx:if="{{!employees.length && !kpi}}" class="card" style="color:#9aa6bc;text-align:center">
     该日期暂无员工提交记录
   </view>
 
-  <!-- 员工提交内容 -->
+  <!-- 员工提交内容(默认只显示第一条,点 header 展开/收起) -->
   <view wx:for="{{employees}}" wx:key="name" class="card">
-    <view class="emp-header">
+    <view class="emp-header" data-name="{{item.name}}" bindtap="onToggleEmp">
       <text class="emp-name">{{item.name}}</text>
       <view class="emp-badges">
         <text class="emp-badge">{{item.count}} 条</text>
         <text wx:if="{{item.pendingCount}}" class="emp-badge emp-badge-pending">{{item.pendingCount}} 待跟进</text>
+        <text wx:if="{{item.moreCount}}" class="emp-arrow">{{item.expanded ? '收起 ▲' : '展开 ▼'}}</text>
       </view>
     </view>
     <view wx:for="{{item.actions}}" wx:for-item="a" wx:key="summary" class="action-item">
@@ -37,6 +38,7 @@
       <view wx:if="{{a.description && a.description !== a.summary}}" class="action-desc">{{a.description}}</view>
       <view wx:if="{{a.product}}" class="action-product">产品：{{a.product}}</view>
     </view>
+    <view wx:if="{{item.moreCount && !item.expanded}}" class="emp-more" data-name="{{item.name}}" bindtap="onToggleEmp">还有 {{item.moreCount}} 条 · 点开</view>
   </view>
 
   <!-- 公司指标（折叠） -->

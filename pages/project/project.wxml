@@ -3,7 +3,7 @@
   <view class="demo-banner">财务/回款/费用/负责人为 <text class="text-green">真实数据</text>（财务近30天 · registry 归属）；报销费用待客户确认。</view>
 
   <view wx:if="{{loading}}" class="card">加载中…</view>
-  <view wx:if="{{error}}" class="card" style="color:#f06292">{{error}}</view>
+  <view wx:if="{{error}}" class="card" style="color:#f5455c">{{error}}</view>
 
   <block wx:if="{{proj}}">
   <!-- 头部指标 -->

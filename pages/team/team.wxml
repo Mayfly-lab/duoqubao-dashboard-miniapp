@@ -3,7 +3,7 @@
   <view class="demo-banner">团队 = 各产品类下的 <text class="text-green">负责人 / 参与人</text>（registry 归属）· 组织职责视图，<text class="text-blue">不挂个人盈亏/费用</text>（opex 无产品列·无人字段，拆不到个人）。</view>
 
   <view wx:if="{{loading}}" class="card">加载中…</view>
-  <view wx:if="{{error}}" class="card" style="color:#f06292">{{error}}</view>
+  <view wx:if="{{error}}" class="card" style="color:#f5455c">{{error}}</view>
 
   <block wx:if="{{!loading && !error}}">
   <view class="role-hint">按产品类看人员 · 数据快照 {{generatedAt}} · 无筛选=全期</view>
@@ -81,22 +81,9 @@
                 <text wx:if="{{p.hasLocked}}" class="lc-pb-item"><text class="text-muted">锁定 </text><text class="text-yellow">{{p.locked}}</text></text>
               </view>
               <view wx:if="{{p.hasTimeline}}">
-                <view class="lc-chart-title">月度回款时间轴</view>
-                <view wx:if="{{p.timeline.length === 0}}" class="lc-no-data">该时间段内暂无数据</view>
-                <scroll-view wx:else scroll-x class="lc-chart">
-                  <view class="lc-bars">
-                    <view wx:for="{{p.timeline}}" wx:for-item="bar" wx:key="ym" class="lc-bar-col">
-                      <view class="lc-pos-zone">
-                        <view wx:if="{{bar.posH > 0}}" class="lc-bar-pos" style="height:{{bar.posH}}rpx"></view>
-                      </view>
-                      <view class="lc-zero"></view>
-                      <view class="lc-neg-zone">
-                        <view wx:if="{{bar.negH > 0}}" class="lc-bar-neg" style="height:{{bar.negH}}rpx"></view>
-                      </view>
-                      <view class="lc-bar-label">{{bar.label}}</view>
-                    </view>
-                  </view>
-                </scroll-view>
+                <view class="lc-chart-title">月度回款时间轴 <text class="lc-legend">单位 $千 · 蓝=已到账 绿=在途(未来~1-2月预计)</text></view>
+                <view wx:if="{{!p.chartOpts}}" class="lc-no-data">该时间段内暂无数据</view>
+                <ucharts wx:else cid="pbchart" height="{{380}}" opts="{{p.chartOpts}}"></ucharts>
               </view>
             </view>
           </view>

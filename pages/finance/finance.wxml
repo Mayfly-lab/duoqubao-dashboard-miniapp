@@ -3,7 +3,7 @@
   <view class="demo-banner">销售/毛利/费用为 <text class="text-green">真实领星数据</text>（全期累计 · duoqubao-api）；按 <text class="text-blue">产品类</text> 聚合（型号加总）。</view>
 
   <view wx:if="{{loading}}" class="role-hint">加载中…</view>
-  <view wx:if="{{error}}" class="role-hint" style="color:#f06292">{{error}}</view>
+  <view wx:if="{{error}}" class="role-hint" style="color:#f5455c">{{error}}</view>
 
   <view class="role-hint">全公司盈亏 · 数据快照 {{generatedAt}} · 全期累计</view>
 

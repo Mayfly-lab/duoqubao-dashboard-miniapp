@@ -13,7 +13,7 @@ Page({
     generatedAt: api.generatedAt,
     dates: [],          // available dates for picker ["2026-06-27", ...]
     selectedIdx: 0,
-    employees: [],      // [{name, actions:[{category,summary,description,follow_up,product}]}]
+    employees: [],      // 渲染用:每人默认只显示第一条,点 header 展开看全部
     kpi: null,          // company-level KPI for the day (collapsed by default)
     kpiExpanded: false,
     loading: true, error: '',
@@ -30,23 +30,19 @@ Page({
       return
     }
 
-    // Collect unique dates from checkins
     const dateSet = new Set(checkins.map(c => c.date || c.created_at?.slice(0, 10) || '').filter(Boolean))
-    // Also include report dates
     reports.forEach(r => {
       const d = (r.full_content || {}).date || r.pushed_at?.slice(0, 10) || ''
       if (d) dateSet.add(d)
     })
     const dates = Array.from(dateSet).sort((a, b) => b.localeCompare(a))
 
-    // Build a map: date -> full_content for quick lookup
     this._reportMap = {}
     reports.forEach(r => {
       const d = (r.full_content || {}).date || r.pushed_at?.slice(0, 10) || ''
       if (d && !this._reportMap[d]) this._reportMap[d] = r.full_content || {}
     })
 
-    // Build a map: date -> checkin actions grouped by employee
     this._checkinMap = {}
     checkins.forEach(c => {
       const d = c.date || c.created_at?.slice(0, 10) || ''
@@ -66,24 +62,24 @@ Page({
     const date = this.data.dates[idx]
     if (!date) return
 
-    // Build employee list for this date
     const byPerson = this._checkinMap[date] || {}
-    const employees = Object.entries(byPerson)
+    // 每人完整行动列表,缓存到 this._employees;展开态每次切日期清空
+    this._employees = Object.entries(byPerson)
       .sort((a, b) => a[0].localeCompare(b[0], 'zh'))
       .map(([name, actions]) => ({
         name,
-        actions: actions.map(a => ({
+        count: actions.length,
+        pendingCount: actions.filter(a => a.follow_up === '待跟进').length,
+        allActions: actions.map(a => ({
           category: a.category,
           summary: a.summary,
           description: a.description || '',
           follow_up: a.follow_up,
           product: a.product || '',
         })),
-        count: actions.length,
-        pendingCount: actions.filter(a => a.follow_up === '待跟进').length,
       }))
+    this._expanded = {}
 
-    // Company KPI for this date (if available)
     const fc = this._reportMap[date] || {}
     const sales = fc['USD_总销售额'] || 0
     const kpi = sales > 0 ? {
@@ -95,7 +91,27 @@ Page({
       profitPct: ((fc['毛利润_USD'] || 0) / sales * 100).toFixed(1),
     } : null
 
-    this.setData({ selectedIdx: idx, employees, kpi, kpiExpanded: false })
+    this.setData({ selectedIdx: idx, kpi, kpiExpanded: false }, () => this.renderEmployees())
+  },
+
+  // 默认每人只显示第一条;展开则全部。点击 header 切换。
+  renderEmployees() {
+    const employees = (this._employees || []).map(e => {
+      const expanded = !!this._expanded[e.name]
+      return {
+        name: e.name, count: e.count, pendingCount: e.pendingCount,
+        expanded,
+        actions: expanded ? e.allActions : e.allActions.slice(0, 1),
+        moreCount: e.count > 1 ? e.count - 1 : 0,
+      }
+    })
+    this.setData({ employees })
+  },
+
+  onToggleEmp(e) {
+    const name = e.currentTarget.dataset.name
+    this._expanded[name] = !this._expanded[name]
+    this.renderEmployees()
   },
 
   onDatePick(e) {

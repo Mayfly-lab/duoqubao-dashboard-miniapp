@@ -40,6 +40,7 @@ const generatedAt = SNAP._generated || ''
 
 // 全量回款/时间轴（团队页批量聚合用，避免逐产品循环调用）
 const allTimelines = () => Promise.resolve(SNAP.timeline_payout || {})
+const allPendingTimelines = () => Promise.resolve(SNAP.timeline_pending_by || {})
 const allPaybacks = () => Promise.resolve(SNAP.payback || [])
 
 const dailyReports = () => Promise.resolve(SNAP.daily_reports || [])
@@ -56,4 +57,4 @@ const monthlySalesByProduct = () => {
   return Promise.resolve(map)
 }
 
-module.exports = { num, projectsCompare, projectsList, projectCosts, projectPnl, dash, projectTimeline, projectOpex, projectReasons, generatedAt, allTimelines, allPaybacks, dailyReports, checkinActions, monthlySalesByProduct }
+module.exports = { num, projectsCompare, projectsList, projectCosts, projectPnl, dash, projectTimeline, projectOpex, projectReasons, generatedAt, allTimelines, allPendingTimelines, allPaybacks, dailyReports, checkinActions, monthlySalesByProduct }

@@ -98,16 +98,18 @@ def main():
 
     names = [p["local_name"] for p in snap["compare"]]
     print(f"== 逐产品 pnl + 时间轴 + opex（{len(names)} 个）==", flush=True)
-    pnl, timeline, opex, reasons = {}, {}, {}, {}
+    pnl, timeline, pending, opex, reasons = {}, {}, {}, {}, {}
     for i, name in enumerate(names):
         pnl[name] = get("/finance/project/pnl", {"name": name, "days": 30})
         timeline[name] = get("/dashboard/timeline/payout", {"name": name})
+        pending[name] = get("/dashboard/timeline/pending", {"name": name})  # 在途预计到账(未来~1-2月)
         opex[name] = get("/dashboard/opex", {"name": name})
         reasons[name] = get("/dashboard/quality/reasons", {"name": name})
         if (i + 1) % 10 == 0 or i + 1 == len(names):
             print(f"  {i+1}/{len(names)}", flush=True)
     snap["pnl"] = pnl
     snap["timeline_payout"] = timeline
+    snap["timeline_pending_by"] = pending
     snap["opex"] = opex
     snap["quality_reasons_by"] = reasons
 
