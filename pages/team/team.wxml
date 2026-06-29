@@ -6,11 +6,11 @@
   <view wx:if="{{error}}" class="card" style="color:#f06292">{{error}}</view>
 
   <block wx:if="{{!loading && !error}}">
-  <view class="role-hint">按产品类看人员 · 数据快照 {{generatedAt}} · 全期累计</view>
+  <view class="role-hint">按产品类看人员 · 数据快照 {{generatedAt}} · 无筛选=全期</view>
 
   <!-- 时间轴日期范围过滤 -->
   <view class="date-filter-row">
-    <text class="date-filter-label">时间轴范围</text>
+    <text class="date-filter-label">月份范围</text>
     <picker mode="selector" range="{{allMonths}}" bindchange="onStartPick">
       <view class="date-pick-btn">{{startYm || '起始月 ▾'}}</view>
     </picker>
@@ -63,6 +63,10 @@
             <view class="prod-row" data-key="{{p.key}}" bindtap="onProductTap">
               <text class="prod-name">{{p.name}}</text>
               <view class="prod-row-right">
+                <view class="prod-metrics">
+                  <text class="prod-sales">{{p.salesText}}</text>
+                  <text class="prod-profit {{p.loss ? 'text-pink' : 'text-green'}}"> · {{p.profitText}}</text>
+                </view>
                 <text class="prod-role {{p.isOwner ? 'role-own' : 'role-join'}}">{{p.role}}</text>
                 <text wx:if="{{p.hasTimeline || p.hasPayback}}" class="prod-expand-arrow">{{p.expanded ? '▲' : '▼'}}</text>
               </view>
@@ -102,5 +106,5 @@
   </view>
   </block>
 
-  <view class="foot-note">数据：领星销售（duoqubao-api 快照 {{generatedAt}}）· 团队按产品类组织 · 个人回款 = 主责产品 payback 汇总 · 费用(opex)无产品列/无人字段，仅在公司·类级展示</view>
+  <view class="foot-note">销售/毛利：领星日粒度按月聚合（monthly_sales）· 无筛选=全期 · 回款来自 Amazon payback · 数据快照 {{generatedAt}}</view>
 </view>

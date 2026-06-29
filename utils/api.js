@@ -45,4 +45,15 @@ const allPaybacks = () => Promise.resolve(SNAP.payback || [])
 const dailyReports = () => Promise.resolve(SNAP.daily_reports || [])
 const checkinActions = () => Promise.resolve(SNAP.checkin_actions || [])
 
-module.exports = { num, projectsCompare, projectsList, projectCosts, projectPnl, dash, projectTimeline, projectOpex, projectReasons, generatedAt, allTimelines, allPaybacks, dailyReports, checkinActions }
+// 月度销售（按产品×月聚合）：{n, ym, s, p, u} 全量数组
+// 按产品名分组：返回 {productName: [{ym, s, p, u}]}
+const monthlySalesByProduct = () => {
+  const map = {}
+  ;(SNAP.monthly_sales || []).forEach(r => {
+    if (!map[r.n]) map[r.n] = []
+    map[r.n].push({ ym: r.ym, s: r.s, p: r.p, u: r.u })
+  })
+  return Promise.resolve(map)
+}
+
+module.exports = { num, projectsCompare, projectsList, projectCosts, projectPnl, dash, projectTimeline, projectOpex, projectReasons, generatedAt, allTimelines, allPaybacks, dailyReports, checkinActions, monthlySalesByProduct }

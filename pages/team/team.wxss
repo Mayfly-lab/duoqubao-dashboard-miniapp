@@ -47,6 +47,9 @@
 .prod-row { display: flex; justify-content: space-between; align-items: center; padding: 12rpx 0; }
 .prod-row-right { display: flex; align-items: center; }
 .prod-name { font-size: 24rpx; color: #cbd5e1; flex: 1; min-width: 0; }
+.prod-metrics { display: flex; align-items: baseline; margin-right: 10rpx; flex-shrink: 0; }
+.prod-sales { font-size: 20rpx; color: #eef2fb; }
+.prod-profit { font-size: 18rpx; }
 .prod-role { font-size: 18rpx; border-radius: 6rpx; padding: 0 8rpx; margin-left: 10rpx; flex-shrink: 0; }
 .role-own { color: #5b8cff; background: rgba(91,140,255,.14); }
 .role-join { color: #94a3c4; background: rgba(148,163,196,.12); }

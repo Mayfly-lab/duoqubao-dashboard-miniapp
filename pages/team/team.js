@@ -1,10 +1,12 @@
 // 团队管理:产品类 → 类下人员(主责∪参与)→ 个人负责产品 → 产品生命周期时间轴。
 // 组织职责视图:人头上不挂毛利/费用(opex 无产品列·无人字段,拆不到个人)。
 // 个人回款 = 主责产品 payback 汇总；月度时间轴来自 timeline_payout。
-// 性能:只渲染当前展开层的完整数据，避免 setData 超载导致 timeout。
+// 日期筛选:月度销售额/毛利来自 monthly_sales（领星日粒度聚合到月）。
 const api = require('../../utils/api.js')
 const registry = require('../../data/registry.js')
 const { lineOf } = require('../../utils/aggregate.js')
+
+const FX = 6.8
 
 function fmtMoney(n) {
   const a = Math.abs(n), s = n < 0 ? '-$' : '$'
@@ -12,6 +14,7 @@ function fmtMoney(n) {
   if (a >= 1e3) return s + (a / 1e3).toFixed(1) + 'k'
   return s + Math.round(a)
 }
+const fmtCny = n => { const a = Math.abs(n); const s = n < 0 ? '-¥' : '¥'; if (a >= 1e4) return s + (a / 1e4).toFixed(1) + '万'; return s + Math.round(a) }
 
 Page({
   data: {
@@ -27,19 +30,21 @@ Page({
   async fetch() {
     this.setData({ loading: true, error: '' })
     try {
-      const [compare, timelines, paybacks] = await Promise.all([
+      const [compare, timelines, paybacks, monthlySales] = await Promise.all([
         api.projectsCompare(),
         api.allTimelines(),
         api.allPaybacks(),
+        api.monthlySalesByProduct(),
       ])
-      // Instance vars — not reactive, avoids setData cost
       this._timelines = timelines
+      this._monthlySales = monthlySales
       this._pbMap = {}
       paybacks.forEach(p => { this._pbMap[p.local_name] = p })
 
-      // Collect all unique months across all products for the picker
+      // All unique months from timeline_payout + monthly_sales for the picker
       const monthSet = new Set()
       Object.values(timelines).forEach(arr => arr.forEach(m => monthSet.add(m.ym)))
+      Object.values(monthlySales).forEach(arr => arr.forEach(m => monthSet.add(m.ym)))
       this._allMonths = Array.from(monthSet).sort()
 
       const byLine = {}
@@ -48,13 +53,14 @@ Page({
         const r = registry.byProduct[p.local_name]
         if (!r) return
         const sales = api.num(p.sales), profit = api.num(p.profit)
-        const e = byLine[line] || (byLine[line] = { line, sales: 0, profit: 0, people: {} })
+        const e = byLine[line] || (byLine[line] = { line, sales: 0, profit: 0, people: {}, productNames: [] })
         e.sales += sales; e.profit += profit
+        e.productNames.push(p.local_name)
         const persons = [...new Set([r.owner, ...(r.joiners || [])].filter(Boolean))]
         persons.forEach(person => {
           const isOwner = person === r.owner
           const pe = e.people[person] || (e.people[person] = { name: person, products: [], ownCount: 0, joinCount: 0 })
-          pe.products.push({ name: p.local_name, sales, role: isOwner ? '主责' : '参与' })
+          pe.products.push({ name: p.local_name, sales, profit, role: isOwner ? '主责' : '参与' })
           if (isOwner) { pe.ownCount++ } else { pe.joinCount++ }
         })
       })
@@ -63,6 +69,14 @@ Page({
     } catch (e) {
       this.setData({ loading: false, error: '加载失败：' + (e.message || e) })
     }
+  },
+
+  // Sum monthly_sales for one product within the date range; returns {s, p} in USD
+  _filteredSales(name) {
+    const { startYm, endYm } = this.data
+    return ((this._monthlySales || {})[name] || [])
+      .filter(m => (!startYm || m.ym >= startYm) && (!endYm || m.ym <= endYm))
+      .reduce((acc, m) => ({ s: acc.s + m.s, p: acc.p + m.p }), { s: 0, p: 0 })
   },
 
   _buildTimeline(name) {
@@ -86,15 +100,29 @@ Page({
     const timelines = this._timelines || {}
     const hasFilter = !!(startYm || endYm)
 
-    // Sum payout_usd within the selected date range for one product
+    // Sum payout_usd within the selected date range for one product (for payback display)
     const filteredPayout = name => (timelines[name] || [])
       .filter(m => (!startYm || m.ym >= startYm) && (!endYm || m.ym <= endYm))
       .reduce((s, m) => s + api.num(m.payout_usd), 0)
+
     const lines = this.data._lines.slice().sort((a, b) => b.sales - a.sales)
-    const top = lines.length ? Math.max(...lines.map(L => L.sales)) : 1
+    const top = lines.length ? Math.max(...lines.map(L => {
+      if (!hasFilter) return L.sales
+      return (L.productNames || []).reduce((s, n) => s + this._filteredSales(n).s, 0)
+    })) : 1
 
     const categories = lines.map(L => {
       const isLineExp = L.line === expandedLine
+
+      // Line-level sales/profit: use monthly_sales when filter active
+      let lineSales = L.sales, lineProfit = L.profit
+      if (hasFilter) {
+        lineSales = 0; lineProfit = 0
+        ;(L.productNames || []).forEach(name => {
+          const fs = this._filteredSales(name)
+          lineSales += fs.s; lineProfit += fs.p
+        })
+      }
 
       // Only build people list for the expanded category
       const people = isLineExp
@@ -103,7 +131,7 @@ Page({
           .map(pe => {
             const isPersonExp = pe.name === expandedPerson
 
-            // Per-person payback aggregate — use date-filtered timeline when filter active
+            // Per-person payback — use date-filtered timeline when filter active
             const ownedNames = pe.products.filter(p => p.role === '主责').map(p => p.name)
             const peRealized = hasFilter
               ? ownedNames.reduce((s, n) => s + filteredPayout(n), 0)
@@ -119,7 +147,13 @@ Page({
                   const pb = pbMap[p.name] || {}
                   const hasTimeline = (timelines[p.name] || []).length > 0
                   const hasPayback = api.num(pb.realized_usd) > 0 || api.num(pb.pending_usd) > 0
-                  // When filter active: realized = filtered timeline sum; pending/locked = all-time
+
+                  // Product sales/profit: use monthly_sales when filter active
+                  const fs = hasFilter ? this._filteredSales(p.name) : null
+                  const prodSales = hasFilter ? fs.s : p.sales
+                  const prodProfit = hasFilter ? fs.p : p.profit
+
+                  // Payback (for expanded product card)
                   const realized = isProductExp
                     ? (hasFilter ? filteredPayout(p.name) : api.num(pb.realized_usd))
                     : 0
@@ -128,6 +162,9 @@ Page({
                   return {
                     name: p.name, role: p.role, isOwner: p.role === '主责',
                     key: prodKey, expanded: isProductExp,
+                    salesText: fmtMoney(prodSales),
+                    profitText: fmtMoney(prodProfit),
+                    loss: prodProfit < 0,
                     realized: isProductExp ? fmtMoney(realized) : '',
                     pending: isProductExp && !hasFilter ? fmtMoney(pending) : '',
                     locked: isProductExp && !hasFilter ? fmtMoney(locked) : '',
@@ -152,9 +189,9 @@ Page({
 
       return {
         line: L.line, peopleCount: Object.keys(L.people).length,
-        salesText: fmtMoney(L.sales), profitText: fmtMoney(L.profit),
-        marginPct: L.sales ? (L.profit / L.sales * 100).toFixed(1) : '0.0',
-        loss: L.profit < 0, barWidth: Math.max(4, Math.round(L.sales / top * 100)),
+        salesText: fmtMoney(lineSales), profitText: fmtMoney(lineProfit),
+        marginPct: lineSales ? (lineProfit / lineSales * 100).toFixed(1) : '0.0',
+        loss: lineProfit < 0, barWidth: Math.max(4, Math.round(lineSales / top * 100)),
         expanded: isLineExp, people,
       }
     })
