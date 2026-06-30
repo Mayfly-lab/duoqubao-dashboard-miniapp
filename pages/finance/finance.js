@@ -157,9 +157,9 @@ Page({
       name: p.name,
       realizedText: fmtCny(p.realizedCny), pendingText: fmtCny(p.pendingCny),
       oweText: fmtCny(p.oweCny), recoverText: fmtCny(p.recover),
-      realizedW: Math.round(p.realizedCny / scale * 100),
-      pendingW: Math.round(p.pendingCny / scale * 100),
-      oweW: p.oweCny > 0 ? Math.max(2, Math.round(p.oweCny / scale * 100)) : 0,
+      realizedW: p.realizedCny > 0 ? Math.max(2, Math.round(p.realizedCny / scale * 100)) : 0,
+      pendingW: p.pendingCny > 0 ? Math.max(3, Math.round(p.pendingCny / scale * 100)) : 0,
+      oweW: p.oweCny > 0 ? Math.max(3, Math.round(p.oweCny / scale * 100)) : 0,
       covered: p.recover >= p.oweCny,           // 能拿回是否盖住要付
       hasOwe: p.oweCny > 0,
     }))

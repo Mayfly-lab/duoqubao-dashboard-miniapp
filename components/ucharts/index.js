@@ -12,11 +12,15 @@ Component({
     detached() { this._chart = null },
   },
   methods: {
-    draw() {
+    draw(retry) {
       if (!this._ready || !this.properties.opts) return
       const q = this.createSelectorQuery().in(this)
       q.select('#' + this.properties.cid).fields({ node: true, size: true }).exec(res => {
-        if (!res || !res[0] || !res[0].node) return
+        // canvas 在 wx:if 里刚展开时节点可能还没就绪 → 重试几次兜底
+        if (!res || !res[0] || !res[0].node) {
+          if ((retry || 0) < 8) setTimeout(() => this.draw((retry || 0) + 1), 60)
+          return
+        }
         const canvas = res[0].node
         const ctx = canvas.getContext('2d')
         const dpr = (wx.getWindowInfo ? wx.getWindowInfo().pixelRatio : wx.getSystemInfoSync().pixelRatio) || 2
