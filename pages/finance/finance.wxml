@@ -1,37 +1,51 @@
 <view class="container">
 
-  <view class="demo-banner">销售/毛利/费用为 <text class="text-green">真实领星数据</text>（全期累计 · duoqubao-api）；按 <text class="text-blue">产品类</text> 聚合（型号加总）。</view>
-
   <view wx:if="{{loading}}" class="role-hint">加载中…</view>
   <view wx:if="{{error}}" class="role-hint" style="color:#f5455c">{{error}}</view>
 
-  <view class="role-hint">全公司盈亏 · 数据快照 {{generatedAt}} · 全期累计</view>
-
-  <!-- KPI 总览 -->
-  <view class="kpi-grid">
-    <view class="kpi-item">
-      <view class="kpi-num text-blue">{{kpi.sales}}</view>
-      <view class="kpi-label">销售额</view>
-    </view>
-    <view class="kpi-item">
-      <view class="kpi-num {{kpi.profit[0] === '-' ? 'text-pink' : 'text-green'}}">{{kpi.profit}}</view>
-      <view class="kpi-label">毛利</view>
-    </view>
-    <view class="kpi-item">
-      <view class="kpi-num text-yellow">{{kpi.marginPct}}%</view>
-      <view class="kpi-label">毛利率</view>
-    </view>
-    <view class="kpi-item">
-      <view class="kpi-num text-purple">{{kpi.acosPct}}%</view>
-      <view class="kpi-label">综合 ACOS</view>
+  <!-- 公司资金预览(钱和货优先) -->
+  <view class="card">
+    <view class="card-title">💰 公司资金预览</view>
+    <view class="card-hint">电商先看钱和货 · 多趣+格致合计 · 数据快照 {{generatedAt}}</view>
+    <view class="fund-grid">
+      <view class="fund-item fund-cash">
+        <view class="fund-num">{{fund.cash}}</view>
+        <view class="fund-label">账上现金</view>
+      </view>
+      <view class="fund-item">
+        <view class="fund-num text-yellow">{{fund.pending}}</view>
+        <view class="fund-label">卡着没回（待回款）</view>
+      </view>
+      <view class="fund-item">
+        <view class="fund-num text-pink">{{fund.owe}}</view>
+        <view class="fund-label">还要付（欠厂）</view>
+      </view>
+      <view class="fund-item">
+        <view class="fund-num text-blue">{{fund.goods}}</view>
+        <view class="fund-label">货值 · {{fund.stockQty}} 件（在库+在途）</view>
+      </view>
     </view>
   </view>
 
-  <!-- 净利:毛利换汇¥ − 公司级运营费¥(全页已统一人民币) -->
-  <view class="net-line">
-    <text class="net-key">≈ 净利</text>
-    <text class="net-val {{kpi.netLoss ? 'text-pink' : 'text-green'}}">{{kpi.netText}}</text>
-    <text class="net-note">毛利换汇 {{kpi.grossCnyText}} − 公司运营费 {{kpi.opexCnyText}}（FX 6.8;仅全公司层可算,型号/类层 opex 归属偏漏不展示净利）</text>
+  <!-- 销售盈亏(次要,折叠) -->
+  <view class="card sales-card" bindtap="onTogglePnl">
+    <view class="card-head">
+      <view class="card-title">📊 销售盈亏（次要）</view>
+      <text class="collapse-arrow">{{pnlExpanded ? '▲' : '▼'}}</text>
+    </view>
+    <view wx:if="{{pnlExpanded}}">
+      <view class="kpi-grid">
+        <view class="kpi-item"><view class="kpi-num text-blue">{{kpi.sales}}</view><view class="kpi-label">销售额</view></view>
+        <view class="kpi-item"><view class="kpi-num {{kpi.profit[0] === '-' ? 'text-pink' : 'text-green'}}">{{kpi.profit}}</view><view class="kpi-label">毛利</view></view>
+        <view class="kpi-item"><view class="kpi-num text-yellow">{{kpi.marginPct}}%</view><view class="kpi-label">毛利率</view></view>
+        <view class="kpi-item"><view class="kpi-num text-purple">{{kpi.acosPct}}%</view><view class="kpi-label">综合 ACOS</view></view>
+      </view>
+      <view class="net-line">
+        <text class="net-key">≈ 净利</text>
+        <text class="net-val {{kpi.netLoss ? 'text-pink' : 'text-green'}}">{{kpi.netText}}</text>
+        <text class="net-note">毛利换汇 {{kpi.grossCnyText}} − 公司运营费 {{kpi.opexCnyText}}（FX 6.8;仅全公司层可算）</text>
+      </view>
+    </view>
   </view>
 
   <!-- 待关注（AI 监控） -->
@@ -90,14 +104,28 @@
 
       <view class="cat-bar"><view class="cat-bar-fill" style="width:{{item.barWidth}}%"></view></view>
 
-      <!-- 展开：类整体指标 -->
+      <!-- 展开：每产品双进度条(能拿回 vs 要付) -->
       <view wx:if="{{item.expanded}}" class="cat-detail">
-        <view class="cat-metrics">
-          <view class="metric"><view class="metric-num text-blue">{{item.salesText}}</view><view class="metric-label">销售额</view></view>
-          <view class="metric"><view class="metric-num {{item.loss ? 'text-pink' : 'text-green'}}">{{item.profitText}}</view><view class="metric-label">毛利</view></view>
-          <view class="metric"><view class="metric-num text-green">{{item.realizedText}}</view><view class="metric-label">已到账</view></view>
-          <view class="metric"><view class="metric-num text-yellow">{{item.pendingText}}</view><view class="metric-label">待回款</view></view>
+        <view class="fb-legend"><text class="fb-dot fb-dot-got"></text>已到账 <text class="fb-dot fb-dot-pend"></text>待回款 <text class="fb-dot fb-dot-owe"></text>要付(欠厂) · 同比例尺</view>
+        <view wx:for="{{item.bars}}" wx:for-item="b" wx:key="name" class="fb-prod">
+          <view class="fb-name">{{b.name}}</view>
+          <!-- 能拿回:已到账(实) + 待回款(斜纹) -->
+          <view class="fb-row">
+            <view class="fb-track">
+              <view class="fb-seg fb-got" style="width:{{b.realizedW}}%"></view>
+              <view class="fb-seg fb-pend" style="width:{{b.pendingW}}%"></view>
+            </view>
+            <text class="fb-val">{{b.recoverText}}</text>
+          </view>
+          <!-- 要付:欠厂 -->
+          <view class="fb-row">
+            <view class="fb-track">
+              <view wx:if="{{b.hasOwe}}" class="fb-seg fb-owe" style="width:{{b.oweW}}%"></view>
+            </view>
+            <text class="fb-val {{b.covered ? '' : 'text-pink'}}">{{b.hasOwe ? b.oweText : '—'}}</text>
+          </view>
         </view>
+        <view wx:if="{{item.bars.length === 0}}" class="empty-hint">该类暂无回款/欠厂数据</view>
         <view class="enter-btn" data-line="{{item.line}}" catchtap="onEnterCategory">进入类看板 ›</view>
       </view>
     </view>

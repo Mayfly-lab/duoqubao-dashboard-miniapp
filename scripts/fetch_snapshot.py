@@ -96,6 +96,17 @@ def main():
     snap["timeseries_monthly"] = post_sql("lingxing", _TIMESERIES_SQL)
     print(f"  timeseries_monthly(产品×月): {len(snap['timeseries_monthly'])} 行", flush=True)
 
+    # 公司资金预览(翰毅:电商公司钱和货最重要,优先于销售/广告):
+    #   账上现金 / 待回款(卡着没回) / 在库+在途货值(货) ← finance_capital_company(金蝶资金盘)
+    #   还要付(欠厂应付) ← finance_v_outstanding 未结
+    snap["capital"] = post_sql("finance", (
+        "SELECT 公司 AS company, ROUND(账上现金_cny) AS cash_cny, ROUND(平台待回款_usd) AS pending_usd, "
+        "ROUND(在库货值_usd) AS stock_usd, 在库件数 AS stock_qty, ROUND(在途货值_usd) AS transit_usd "
+        "FROM finance_capital_company"))
+    snap["payable_total"] = post_sql("finance",
+        "SELECT ROUND(SUM(未结)) AS owe_cny FROM finance_v_outstanding WHERE 是否冲账=false")
+    print(f"  capital(资金盘): {len(snap['capital'])} 公司 · 欠厂 {snap['payable_total']}", flush=True)
+
     names = [p["local_name"] for p in snap["compare"]]
     print(f"== 逐产品 pnl + 时间轴 + opex（{len(names)} 个）==", flush=True)
     pnl, timeline, pending, opex, reasons = {}, {}, {}, {}, {}

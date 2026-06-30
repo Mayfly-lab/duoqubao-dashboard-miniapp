@@ -162,3 +162,36 @@
 .net-key { font-size: 26rpx; color: var(--t2); }
 .net-val { font-size: 38rpx; font-weight: 700; }
 .net-note { width: 100%; font-size: 20rpx; color: var(--t3); line-height: 1.5; }
+
+/* 公司资金预览(钱和货优先) */
+.fund-grid { display: flex; flex-wrap: wrap; justify-content: space-between; }
+.fund-item {
+  width: 48%; box-sizing: border-box; margin-bottom: 16rpx;
+  background: var(--tint); border-radius: 16rpx; padding: 26rpx 24rpx;
+}
+.fund-num { font-size: 40rpx; font-weight: 700; color: var(--t1); white-space: nowrap; }
+.fund-label { font-size: 22rpx; color: var(--t2); margin-top: 8rpx; }
+/* 账上现金:主色强调大卡 */
+.fund-cash { background: var(--primary); }
+.fund-cash .fund-num { color: #fff; }
+.fund-cash .fund-label { color: rgba(255,255,255,.85); }
+
+/* 销售盈亏 折叠卡 */
+.sales-card .card-head { margin-bottom: 0; }
+.collapse-arrow { font-size: 24rpx; color: var(--t3); }
+
+/* 每产品双进度条(能拿回 vs 要付·经营驾驶舱风格) */
+.fb-legend { font-size: 20rpx; color: var(--t2); margin-bottom: 14rpx; }
+.fb-dot { display:inline-block; width:16rpx; height:16rpx; border-radius:4rpx; vertical-align:middle; margin: 0 6rpx 0 14rpx; }
+.fb-dot-got { background: var(--primary); }
+.fb-dot-pend { background: repeating-linear-gradient(45deg, #6ba3ff, #6ba3ff 4rpx, transparent 4rpx, transparent 8rpx); border:1rpx solid #6ba3ff; }
+.fb-dot-owe { background: #f0a020; }
+.fb-prod { margin-bottom: 18rpx; }
+.fb-name { font-size: 24rpx; color: var(--t1); margin-bottom: 6rpx; }
+.fb-row { display: flex; align-items: center; margin-bottom: 5rpx; }
+.fb-track { flex: 1; display: flex; height: 18rpx; background: #eef1f6; border-radius: 5rpx; overflow: hidden; }
+.fb-seg { height: 100%; }
+.fb-got { background: var(--primary); }
+.fb-pend { background: repeating-linear-gradient(45deg, #6ba3ff, #6ba3ff 5rpx, rgba(107,163,255,.25) 5rpx, rgba(107,163,255,.25) 10rpx); }
+.fb-owe { background: #f0a020; border-radius: 0 5rpx 5rpx 0; }
+.fb-val { width: 150rpx; text-align: right; font-size: 22rpx; color: var(--t2); flex-shrink: 0; }
