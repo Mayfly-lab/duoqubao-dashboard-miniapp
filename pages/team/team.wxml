@@ -68,9 +68,9 @@
                 <text wx:if="{{p.hasProfitTimeline}}" class="prod-expand-arrow">{{p.expanded ? '▲' : '▼'}}</text>
               </view>
             </view>
-            <!-- 产品展开：月度利润时间轴 -->
+            <!-- 产品展开：月度利润时间轴(uCharts) -->
             <view wx:if="{{p.expanded && p.hasProfitTimeline}}" class="prod-lifecycle">
-              <view class="lc-chart-title">月度利润时间轴 <text class="lc-legend">单位 $千</text></view>
+              <view class="lc-chart-title">月度利润时间轴 <text class="lc-legend">单位 $千 · <text class="lc-dot-pos"></text>盈利 <text class="lc-dot-neg"></text>亏损</text></view>
               <view wx:if="{{!p.chartOpts}}" class="lc-no-data">该时间段内暂无数据</view>
               <ucharts wx:else cid="pbchart" height="{{380}}" opts="{{p.chartOpts}}"></ucharts>
             </view>

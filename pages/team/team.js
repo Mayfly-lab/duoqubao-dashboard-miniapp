@@ -81,6 +81,7 @@ Page({
       .reduce((acc, m) => ({ s: acc.s + m.s, p: acc.p + m.p }), { s: 0, p: 0 })
   },
 
+  // 月度利润 uCharts 正负柱(第三方库·canvas)。盈利向上/亏损向下,uCharts 自动按正负画轴上下。
   _buildProfitTimeline(name) {
     const { startYm, endYm } = this.data
     const inRange = ym => (!startYm || ym >= startYm) && (!endYm || ym <= endYm)
@@ -92,13 +93,12 @@ Page({
     return {
       type: 'column',
       categories: yms.map(y => y.slice(2)),
-      series: [
-        { name: '月度利润', data: yms.map(y => k(profit[y])), color: '#2b6cff' },
-      ],
+      // 点级配色:盈利=主蓝、亏损=红(app token 色,跟整体一致)
+      series: [{ name: '月度利润', data: yms.map(y => { const v = k(profit[y]); return { value: v, color: v < 0 ? '#f5455c' : '#2b6cff' } }) }],
       background: '#ffffff',
       fontSize: 9,
       padding: [14, 12, 0, 6],
-      legend: { show: true, fontColor: '#9aa6bc', fontSize: 9, padding: 4 },
+      legend: { show: false },
       xAxis: { disableGrid: true, fontColor: '#9aa6bc', fontSize: 9, axisLineColor: '#edf0f5', rotateLabel: false, itemCount: 6, scrollShow: yms.length > 6, scrollPosition: 'right', scrollColor: '#2b6cff', scrollBackgroundColor: '#eef1f6' },
       yAxis: { gridType: 'dash', dashLength: 3, fontColor: '#9aa6bc', fontSize: 9, gridColor: '#edf0f5', splitNumber: 4 },
       extra: { column: { type: 'group', width: 12, seriesGap: 2, barBorderRadius: [4, 4, 0, 0], linearType: 'opacity', linearOpacity: 0.3, activeBgColor: '#000', activeBgOpacity: 0.04 }, tooltip: { showBox: true, bgColor: '#1f2a3c', fontColor: '#ffffff' } },

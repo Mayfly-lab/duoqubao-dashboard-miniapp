@@ -26,7 +26,14 @@
   "compileType": "miniprogram",
   "simulatorPluginLibVersion": {},
   "packOptions": {
-    "ignore": [],
+    "ignore": [
+      { "type": "folder", "value": "scripts" },
+      { "type": "glob", "value": "**/*.bak" },
+      { "type": "glob", "value": "**/*.py" },
+      { "type": "glob", "value": "**/__pycache__" },
+      { "type": "glob", "value": "**/*.md" },
+      { "type": "glob", "value": "**/*.csv" }
+    ],
     "include": []
   },
   "appid": "wx3f885167b978734f",

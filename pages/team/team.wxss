@@ -56,7 +56,7 @@
 .prod-expand-arrow { font-size: 18rpx; color: #6b7891; margin-left: 10rpx; flex-shrink: 0; }
 
 /* 产品生命周期展开区 */
-.prod-lifecycle { background: #0b1220; border-radius: 12rpx; padding: 16rpx 18rpx; margin-bottom: 8rpx; }
+.prod-lifecycle { background: #ffffff; border: 1rpx solid var(--line); border-radius: 12rpx; padding: 16rpx 18rpx; margin-bottom: 8rpx; }
 
 /* 回款明细行 */
 .lc-pb-row { display: flex; align-items: center; flex-wrap: wrap; margin-bottom: 14rpx; }
@@ -80,3 +80,11 @@
 /* 在途预计到账(虚线柱,叠在已到账之上) */
 .lc-bar-pend { width: 22rpx; background: rgba(43,108,255,.14); border: 1rpx dashed #2b6cff; border-bottom: none; border-radius: 3rpx 3rpx 0 0; box-sizing: border-box; }
 .lc-legend { font-size: 20rpx; color: #9aa6bc; font-weight: normal; margin-left: 8rpx; }
+
+/* 利润正负柱·柱顶数值 */
+.lc-bar-val { font-size: 15rpx; line-height: 1.2; margin-bottom: 4rpx; min-height: 18rpx; }
+
+/* 利润图例小色点 */
+.lc-dot-pos, .lc-dot-neg { display:inline-block; width:14rpx; height:14rpx; border-radius:3rpx; vertical-align:middle; margin:0 4rpx 0 10rpx; }
+.lc-dot-pos { background:#2b6cff; }
+.lc-dot-neg { background:#f5455c; }

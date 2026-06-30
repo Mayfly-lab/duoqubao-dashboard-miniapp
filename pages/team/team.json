@@ -1,4 +1,6 @@
 {
   "navigationBarTitleText": "团队管理看板",
-  "usingComponents": {}
+  "usingComponents": {
+    "ucharts": "/components/ucharts/index"
+  }
 }

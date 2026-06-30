@@ -13,7 +13,7 @@
   margin-bottom: 4rpx;
   background: #f3f6fc;
 }
-.rank-row:active { background: #222f4d; }
+.rank-row:active { background: #eef1f6; }
 
 .rank-pos {
   width: 40rpx;

@@ -1,7 +1,7 @@
 /* 核心结论卡 */
 .conclusion-card {
-  background: linear-gradient(140deg, #0d2a3a, #142a1f);
-  border: 1rpx solid #18b888;
+  background: linear-gradient(140deg, #eaf1ff, #effaf4);
+  border: 1rpx solid #cfe9df;
   border-radius: 24rpx;
   padding: 36rpx 32rpx;
   margin-bottom: 32rpx;
@@ -15,7 +15,7 @@
 }
 .conclusion-main {
   font-size: 30rpx;
-  color: #dbe3f4;
+  color: #1f2a3c;
   line-height: 1.8;
   margin-bottom: 24rpx;
 }
