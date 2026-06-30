@@ -1,36 +1,82 @@
-.role-hint { font-size: 22rpx; color: #6b7280; margin-bottom: 24rpx; }
+.role-hint { font-size: 22rpx; color: #9aa6bc; margin-bottom: 16rpx; }
+
+/* 时间轴日期范围过滤器 */
+.date-filter-row { display: flex; align-items: center; flex-wrap: wrap; margin-bottom: 24rpx; }
+.date-filter-label { font-size: 22rpx; color: #9aa6bc; margin-right: 12rpx; }
+.date-pick-btn { font-size: 24rpx; color: #2b6cff; background: rgba(43,108,255,.10); padding: 6rpx 20rpx; border-radius: 8rpx; min-width: 100rpx; text-align: center; }
+.date-sep { font-size: 22rpx; color: #9aa6bc; margin: 0 10rpx; }
+.date-clear { font-size: 22rpx; color: #f5455c; background: rgba(240,98,146,.12); padding: 6rpx 14rpx; border-radius: 8rpx; margin-left: 14rpx; }
+.lc-no-data { font-size: 20rpx; color: #9aa6bc; padding: 10rpx 0; }
 
 /* 类 */
 .cat-head { display: flex; justify-content: space-between; align-items: flex-start; }
-.cat-name { font-size: 32rpx; font-weight: 600; color: #eef2fb; }
-.cat-arrow { font-size: 22rpx; color: #94a3c4; }
-.cat-meta { font-size: 22rpx; color: #6b7280; margin-top: 6rpx; }
+.cat-name { font-size: 32rpx; font-weight: 600; color: #1f2a3c; }
+.cat-arrow { font-size: 22rpx; color: #6b7891; }
+.cat-meta { font-size: 22rpx; color: #9aa6bc; margin-top: 6rpx; }
 .cat-right { text-align: right; }
-.cat-sales { font-size: 30rpx; font-weight: 600; color: #eef2fb; }
+.cat-sales { font-size: 30rpx; font-weight: 600; color: #1f2a3c; }
 .cat-sub { font-size: 22rpx; margin-top: 6rpx; }
-.cat-bar { height: 8rpx; background: #0f1729; border-radius: 4rpx; margin-top: 16rpx; overflow: hidden; }
-.cat-bar-fill { height: 100%; background: #5b8cff; border-radius: 4rpx; }
+.cat-bar { height: 8rpx; background: #eef1f6; border-radius: 4rpx; margin-top: 16rpx; overflow: hidden; }
+.cat-bar-fill { height: 100%; background: #2b6cff; border-radius: 4rpx; }
 
 /* 类下人员 */
-.people { margin-top: 20rpx; padding-top: 8rpx; border-top: 1rpx solid #2c3a5c; }
+.people { margin-top: 20rpx; padding-top: 8rpx; border-top: 1rpx solid #edf0f5; }
 .person { padding: 16rpx 0; border-bottom: 1rpx solid #1a2438; }
 .person:last-child { border-bottom: none; }
 .person-head { display: flex; justify-content: space-between; align-items: center; }
 .person-left { flex: 1; min-width: 0; }
-.person-name { font-size: 28rpx; font-weight: 600; color: #eef2fb; }
-.person-arrow { font-size: 20rpx; color: #94a3c4; }
+.person-name { font-size: 28rpx; font-weight: 600; color: #1f2a3c; }
+.person-arrow { font-size: 20rpx; color: #6b7891; }
 .person-badges { margin-top: 6rpx; }
 .badge { font-size: 18rpx; border-radius: 6rpx; padding: 2rpx 10rpx; margin-right: 8rpx; }
-.badge-own { color: #5b8cff; background: rgba(91,140,255,.14); }
-.badge-join { color: #94a3c4; background: rgba(148,163,196,.12); }
-/* 个人:负责产品清单 */
-.person-detail { margin-top: 14rpx; padding: 8rpx 16rpx; background: #0f1729; border-radius: 14rpx; }
-.prod-row { display: flex; justify-content: space-between; align-items: center; padding: 12rpx 0; border-top: 1rpx solid #1a2438; }
-.prod-row:first-child { border-top: none; }
-.prod-name { font-size: 24rpx; color: #cbd5e1; flex: 1; min-width: 0; }
-.prod-role { font-size: 18rpx; border-radius: 6rpx; padding: 0 8rpx; margin-left: 10rpx; flex-shrink: 0; }
-.role-own { color: #5b8cff; background: rgba(91,140,255,.14); }
-.role-join { color: #94a3c4; background: rgba(148,163,196,.12); }
-.prod-val { font-size: 22rpx; color: #eef2fb; flex-shrink: 0; }
+.badge-own { color: #2b6cff; background: rgba(91,140,255,.14); }
+.badge-join { color: #6b7891; background: rgba(148,163,196,.12); }
 
-.foot-note { text-align: center; font-size: 20rpx; color: #6b7280; margin-top: 32rpx; }
+/* 个人展开区 */
+.person-detail { margin-top: 14rpx; padding: 8rpx 16rpx; background: #eef1f6; border-radius: 14rpx; }
+
+/* 主责产品回款汇总行 */
+.pe-pb-row { display: flex; align-items: center; flex-wrap: wrap; padding: 6rpx 0 14rpx; font-size: 22rpx; border-bottom: 1rpx solid #1a2438; margin-bottom: 4rpx; }
+.pe-pb-label { font-size: 20rpx; color: #9aa6bc; margin-right: 10rpx; }
+
+/* 产品条目容器（相邻间加分割线）*/
+.prod-item { }
+.prod-item + .prod-item { border-top: 1rpx solid #1a2438; }
+
+/* 产品行 */
+.prod-row { display: flex; justify-content: space-between; align-items: center; padding: 12rpx 0; }
+.prod-row-right { display: flex; align-items: center; }
+.prod-name { font-size: 24rpx; color: #1f2a3c; flex: 1; min-width: 0; }
+.prod-metrics { display: flex; align-items: baseline; margin-right: 10rpx; flex-shrink: 0; }
+.prod-sales { font-size: 20rpx; color: #1f2a3c; }
+.prod-profit { font-size: 18rpx; }
+.prod-role { font-size: 18rpx; border-radius: 6rpx; padding: 0 8rpx; margin-left: 10rpx; flex-shrink: 0; }
+.role-own { color: #2b6cff; background: rgba(91,140,255,.14); }
+.role-join { color: #6b7891; background: rgba(148,163,196,.12); }
+.prod-expand-arrow { font-size: 18rpx; color: #6b7891; margin-left: 10rpx; flex-shrink: 0; }
+
+/* 产品生命周期展开区 */
+.prod-lifecycle { background: #0b1220; border-radius: 12rpx; padding: 16rpx 18rpx; margin-bottom: 8rpx; }
+
+/* 回款明细行 */
+.lc-pb-row { display: flex; align-items: center; flex-wrap: wrap; margin-bottom: 14rpx; }
+.lc-pb-item { font-size: 22rpx; }
+.lc-pb-sep { font-size: 22rpx; color: #9aa6bc; }
+
+/* 月度时间轴 */
+.lc-chart-title { font-size: 20rpx; color: #9aa6bc; margin-bottom: 10rpx; }
+.lc-chart { width: 100%; white-space: nowrap; }
+.lc-bars { display: inline-flex; flex-direction: row; flex-wrap: nowrap; align-items: flex-start; }
+.lc-bar-col { display: flex; flex-direction: column; align-items: center; width: 38rpx; flex-shrink: 0; }
+.lc-pos-zone { height: 56rpx; width: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; }
+.lc-bar-pos { width: 22rpx; background: #2b6cff; border-radius: 3rpx 3rpx 0 0; }
+.lc-zero { height: 2rpx; width: 22rpx; background: #edf0f5; }
+.lc-neg-zone { height: 56rpx; width: 100%; display: flex; flex-direction: column; justify-content: flex-start; align-items: center; }
+.lc-bar-neg { width: 22rpx; background: #f5455c; border-radius: 0 0 3rpx 3rpx; }
+.lc-bar-label { font-size: 16rpx; color: #9aa6bc; text-align: center; margin-top: 4rpx; }
+
+.foot-note { text-align: center; font-size: 20rpx; color: #9aa6bc; margin-top: 32rpx; }
+
+/* 在途预计到账(虚线柱,叠在已到账之上) */
+.lc-bar-pend { width: 22rpx; background: rgba(43,108,255,.14); border: 1rpx dashed #2b6cff; border-bottom: none; border-radius: 3rpx 3rpx 0 0; box-sizing: border-box; }
+.lc-legend { font-size: 20rpx; color: #9aa6bc; font-weight: normal; margin-left: 8rpx; }

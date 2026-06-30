@@ -1,0 +1,39 @@
+.dr-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8rpx; }
+.dr-title { font-size: 34rpx; font-weight: 600; color: #1f2a3c; }
+.date-pick-btn { font-size: 24rpx; color: #2b6cff; background: rgba(43,108,255,.10); padding: 6rpx 18rpx; border-radius: 8rpx; }
+.role-hint { font-size: 22rpx; color: #9aa6bc; margin-bottom: 24rpx; }
+
+/* 员工卡片 */
+.emp-header { display: flex; align-items: center; margin-bottom: 16rpx; }
+.emp-name { font-size: 30rpx; font-weight: 600; color: #1f2a3c; margin-right: 14rpx; }
+.emp-badges { display: flex; gap: 8rpx; }
+.emp-badge { font-size: 18rpx; color: #6b7891; background: rgba(148,163,196,.12); padding: 2rpx 12rpx; border-radius: 6rpx; }
+.emp-badge-pending { color: #fbbf24; background: rgba(251,191,36,.1); }
+
+/* 行动条目 */
+.action-item { padding: 14rpx 0; border-top: 1rpx solid #1a2438; }
+.action-head { display: flex; align-items: center; margin-bottom: 8rpx; }
+.action-cat { font-size: 20rpx; color: #2b6cff; background: rgba(43,108,255,.10); padding: 2rpx 12rpx; border-radius: 6rpx; margin-right: 12rpx; }
+.action-fu { font-size: 18rpx; padding: 2rpx 10rpx; border-radius: 6rpx; }
+.fu-done { color: #4ade80; background: rgba(74,222,128,.1); }
+.fu-pending { color: #fbbf24; background: rgba(251,191,36,.1); }
+.fu-none { color: #9aa6bc; background: rgba(107,114,128,.1); }
+.action-summary { font-size: 26rpx; color: #1f2a3c; line-height: 1.5; }
+.action-desc { font-size: 22rpx; color: #6b7891; margin-top: 6rpx; line-height: 1.5; }
+.action-product { font-size: 20rpx; color: #9aa6bc; margin-top: 6rpx; }
+
+/* 公司指标（折叠） */
+.kpi-collapse { }
+.kpi-collapse-head { display: flex; justify-content: space-between; align-items: center; }
+.collapse-arrow { font-size: 20rpx; color: #6b7891; }
+.section-title { font-size: 24rpx; font-weight: 600; color: #6b7891; }
+.kpi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16rpx; margin-top: 16rpx; }
+.kpi-item { background: #eef1f6; border-radius: 12rpx; padding: 14rpx 16rpx; }
+.kpi-label { font-size: 20rpx; color: #9aa6bc; margin-bottom: 6rpx; }
+.kpi-val { font-size: 28rpx; font-weight: 600; color: #1f2a3c; }
+
+.foot-note { text-align: center; font-size: 20rpx; color: #9aa6bc; margin-top: 32rpx; }
+
+/* 员工 header 展开/收起 */
+.emp-arrow { margin-left: 12rpx; font-size: 22rpx; color: #2b6cff; }
+.emp-more { margin-top: 8rpx; font-size: 24rpx; color: #2b6cff; text-align: center; padding: 8rpx 0; }

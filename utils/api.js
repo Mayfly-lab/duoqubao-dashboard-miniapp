@@ -38,4 +38,27 @@ const projectReasons = name => Promise.resolve((SNAP.quality_reasons_by || {})[n
 // 快照生成时间(页面标注数据时效用)
 const generatedAt = SNAP._generated || ''
 
-module.exports = { num, projectsCompare, projectsList, projectCosts, projectPnl, dash, projectTimeline, projectOpex, projectReasons, generatedAt }
+// 全量回款/时间轴（团队页批量聚合用，避免逐产品循环调用）
+const allTimelines = () => Promise.resolve(SNAP.timeline_payout || {})
+const allPendingTimelines = () => Promise.resolve(SNAP.timeline_pending_by || {})
+const allPaybacks = () => Promise.resolve(SNAP.payback || [])
+
+// 公司资金预览:资金盘(账上现金/待回款/库存货值 by 公司) + 欠厂应付总额
+const capital = () => Promise.resolve(SNAP.capital || [])
+const payableTotal = () => Promise.resolve((SNAP.payable_total || [])[0] || {})
+
+const dailyReports = () => Promise.resolve(SNAP.daily_reports || [])
+const checkinActions = () => Promise.resolve(SNAP.checkin_actions || [])
+
+// 月度销售（按产品×月聚合）：{n, ym, s, p, u} 全量数组
+// 按产品名分组：返回 {productName: [{ym, s, p, u}]}
+const monthlySalesByProduct = () => {
+  const map = {}
+  ;(SNAP.monthly_sales || []).forEach(r => {
+    if (!map[r.n]) map[r.n] = []
+    map[r.n].push({ ym: r.ym, s: r.s, p: r.p, u: r.u })
+  })
+  return Promise.resolve(map)
+}
+
+module.exports = { num, projectsCompare, projectsList, projectCosts, projectPnl, dash, projectTimeline, projectOpex, projectReasons, generatedAt, allTimelines, allPendingTimelines, allPaybacks, capital, payableTotal, dailyReports, checkinActions, monthlySalesByProduct }

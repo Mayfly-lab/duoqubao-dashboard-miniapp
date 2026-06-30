@@ -1,12 +1,12 @@
 <view class="container">
   <view wx:if="{{loading}}" class="card">加载中…</view>
-  <view wx:if="{{error}}" class="card" style="color:#f06292">{{error}}</view>
+  <view wx:if="{{error}}" class="card" style="color:#f5455c">{{error}}</view>
 
   <block wx:if="{{!loading && !error}}">
   <!-- 类整体 + 回款 -->
   <view class="card">
     <view class="cat-title">{{line}}<text class="cat-tag">{{models.length}} 型号</text></view>
-    <view class="ph-grid">
+    <view class="ph-grid ph-grid-2col">
       <view class="ph-item"><view class="ph-num text-blue">{{kpi.salesText}}</view><view class="ph-lab">销售额</view></view>
       <view class="ph-item"><view class="ph-num {{kpi.loss ? 'text-pink' : 'text-green'}}">{{kpi.profitText}}</view><view class="ph-lab">毛利 {{kpi.marginPct}}%</view></view>
       <view class="ph-item"><view class="ph-num text-green">{{kpi.realizedText}}</view><view class="ph-lab">已到账</view></view>
@@ -23,21 +23,46 @@
 
   <!-- L0 双进度条 -->
   <view wx:if="{{level0 && !level0.procMissing}}" class="card">
-    <view class="card-title">回本进度 · 锁定 {{level0.lockPct}}%</view>
-    <view class="card-hint">上=全投入 {{level0.investText}} / 下=回款 {{level0.backText}}（已到账+在途·同比例尺·¥）· 采购取活跃代 {{level0.buyYear}} 年（治款混·与回款同代）· 头程按台数估 · opex 类聚合偏漏</view>
+    <!-- 大标题：回本率 -->
+    <view class="rb-head">
+      <view>
+        <view class="card-title" style="margin-bottom:0">回本进度</view>
+        <view class="rb-hint text-muted">采购×{{level0.buyYear}}年款 · 头程估算 · opex聚合</view>
+      </view>
+      <view class="rb-pct">{{level0.lockPct}}%</view>
+    </view>
+
+    <!-- 投入构成 -->
+    <view class="rb-row-label">总投入 {{level0.investText}}</view>
     <view class="prog">
       <view wx:for="{{level0.investSegs}}" wx:key="label" class="prog-seg {{item.cls}}" style="width:{{item.w}}%"></view>
     </view>
     <view class="prog-legend">
-      <view wx:for="{{level0.investSegs}}" wx:key="label" class="lg"><text class="dot {{item.cls}}"></text>{{item.label}} {{item.val}}</view>
+      <view wx:for="{{level0.investSegs}}" wx:key="label" class="lg">
+        <text class="dot {{item.cls}}"></text>{{item.label}} <text class="lg-val">{{item.val}}</text>
+      </view>
     </view>
+
+    <!-- 回款构成 -->
+    <view class="rb-row-label" style="margin-top:18rpx">已回款 {{level0.backText}}</view>
     <view class="prog">
       <view wx:for="{{level0.backSegs}}" wx:key="label" class="prog-seg {{item.cls}}" style="width:{{item.w}}%"></view>
     </view>
     <view class="prog-legend">
-      <view wx:for="{{level0.backSegs}}" wx:key="label" class="lg"><text class="dot {{item.cls}}"></text>{{item.label}} {{item.val}}</view>
+      <view wx:for="{{level0.backSegs}}" wx:key="label" class="lg">
+        <text class="dot {{item.cls}}"></text>{{item.label}} <text class="lg-val">{{item.val}}</text>
+      </view>
     </view>
-    <view class="future-line">账期红利：欠厂 {{level0.owe}} 未付 · 可用回款滚动付尾款</view>
+
+    <!-- 欠厂 -->
+    <view wx:if="{{level0.owe}}" class="rb-owe">
+      <view class="rb-owe-row">
+        <text class="text-muted">采购总额</text><text> {{level0.procTotal}}</text>
+        <text class="text-muted" style="margin-left:20rpx">已付</text><text class="text-green"> {{level0.procPaid}}</text>
+        <text class="text-muted" style="margin-left:20rpx">欠尾款</text><text class="text-yellow"> {{level0.owe}}</text>
+      </view>
+      <view class="rb-owe-note text-muted">可用已回款支付尾款，无需额外资金</view>
+    </view>
   </view>
 
   <!-- L1 四问 -->
@@ -69,7 +94,7 @@
 
   <!-- 弹药 -->
   <view wx:if="{{inventory}}" class="card">
-    <view class="card-title">库存弹药</view>
+    <view class="card-title">库存状况</view>
     <view class="ph-grid">
       <view class="ph-item"><view class="ph-num">{{inventory.xianhuo}}</view><view class="ph-lab">现货</view></view>
       <view class="ph-item"><view class="ph-num">{{inventory.zaitu}}</view><view class="ph-lab">在途</view></view>

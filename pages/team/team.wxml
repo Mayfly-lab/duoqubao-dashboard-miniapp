@@ -3,10 +3,23 @@
   <view class="demo-banner">团队 = 各产品类下的 <text class="text-green">负责人 / 参与人</text>（registry 归属）· 组织职责视图，<text class="text-blue">不挂个人盈亏/费用</text>（opex 无产品列·无人字段，拆不到个人）。</view>
 
   <view wx:if="{{loading}}" class="card">加载中…</view>
-  <view wx:if="{{error}}" class="card" style="color:#f06292">{{error}}</view>
+  <view wx:if="{{error}}" class="card" style="color:#f5455c">{{error}}</view>
 
   <block wx:if="{{!loading && !error}}">
-  <view class="role-hint">按产品类看人员 · 数据快照 {{generatedAt}} · 全期累计</view>
+  <view class="role-hint">按产品类看人员 · 数据快照 {{generatedAt}} · 无筛选=全期</view>
+
+  <!-- 时间轴日期范围过滤 -->
+  <view class="date-filter-row">
+    <text class="date-filter-label">月份范围</text>
+    <picker mode="selector" range="{{allMonths}}" bindchange="onStartPick">
+      <view class="date-pick-btn">{{startYm || '起始月 ▾'}}</view>
+    </picker>
+    <text class="date-sep">—</text>
+    <picker mode="selector" range="{{allMonths}}" bindchange="onEndPick">
+      <view class="date-pick-btn">{{endYm || '结束月 ▾'}}</view>
+    </picker>
+    <view wx:if="{{startYm || endYm}}" class="date-clear" bindtap="onClearFilter">× 清除</view>
+  </view>
 
   <view wx:for="{{categories}}" wx:key="line" class="card">
     <!-- 类 -->
@@ -35,11 +48,32 @@
           </view>
         </view>
 
-        <!-- 个人:负责产品清单（仅职责，不挂盈亏/费用）-->
+        <!-- 个人:产品清单 + 利润汇总 + 月度利润时间轴 -->
         <view wx:if="{{pe.expanded}}" class="person-detail">
-          <view wx:for="{{pe.products}}" wx:for-item="p" wx:key="name" class="prod-row">
-            <text class="prod-name">{{p.name}}</text>
-            <text class="prod-role {{p.isOwner ? 'role-own' : 'role-join'}}">{{p.role}}</text>
+          <!-- 主责产品利润汇总 -->
+          <view wx:if="{{pe.hasProfit}}" class="pe-pb-row">
+            <text class="pe-pb-label">主责毛利</text>
+            <text class="{{pe.personLoss ? 'text-pink' : 'text-green'}}">{{pe.personProfitText}}</text>
+          </view>
+          <!-- 产品列表（可展开月度利润时间轴） -->
+          <view wx:for="{{pe.products}}" wx:for-item="p" wx:key="name" class="prod-item">
+            <view class="prod-row" data-key="{{p.key}}" bindtap="onProductTap">
+              <text class="prod-name">{{p.name}}</text>
+              <view class="prod-row-right">
+                <view class="prod-metrics">
+                  <text class="prod-sales">{{p.salesText}}</text>
+                  <text class="prod-profit {{p.loss ? 'text-pink' : 'text-green'}}"> · {{p.profitText}}</text>
+                </view>
+                <text class="prod-role {{p.isOwner ? 'role-own' : 'role-join'}}">{{p.role}}</text>
+                <text wx:if="{{p.hasProfitTimeline}}" class="prod-expand-arrow">{{p.expanded ? '▲' : '▼'}}</text>
+              </view>
+            </view>
+            <!-- 产品展开：月度利润时间轴 -->
+            <view wx:if="{{p.expanded && p.hasProfitTimeline}}" class="prod-lifecycle">
+              <view class="lc-chart-title">月度利润时间轴 <text class="lc-legend">单位 $千</text></view>
+              <view wx:if="{{!p.chartOpts}}" class="lc-no-data">该时间段内暂无数据</view>
+              <ucharts wx:else cid="pbchart" height="{{380}}" opts="{{p.chartOpts}}"></ucharts>
+            </view>
           </view>
         </view>
       </view>
@@ -47,5 +81,5 @@
   </view>
   </block>
 
-  <view class="foot-note">数据：领星销售（duoqubao-api 快照 {{generatedAt}}）· 团队按产品类组织 · 类级销售/毛利为真账，个人仅显示职责与主责销售体量 · 费用(opex)无产品列/无人字段，仅在公司·类级展示</view>
+  <view class="foot-note">销售/毛利：领星日粒度按月聚合（monthly_sales）· 无筛选=全期 · 数据快照 {{generatedAt}}</view>
 </view>

@@ -1,65 +1,82 @@
+/* ============ 领星浅色风格 · 设计 token（改风格只动这里） ============ */
 page {
-  background-color: #0f1729;
-  color: #eef2fb;
+  /* 主色 / 强调 */
+  --primary: #2b6cff;          /* 领星品牌蓝 */
+  --primary-weak: #eaf1ff;     /* 浅蓝底（KPI 内框/选中底） */
+  /* 涨跌：红涨绿跌（中国习惯） */
+  --up: #f5455c;               /* 涨 / 正 */
+  --down: #18b888;             /* 跌 / 负 */
+  /* 背景 / 卡片 */
+  --bg: #f4f6f9;               /* 页面浅灰底 */
+  --card: #ffffff;             /* 白卡片 */
+  --tint: #f3f6fc;             /* 浅色内框底 */
+  /* 文字 */
+  --t1: #1f2a3c;               /* 主文字 */
+  --t2: #6b7891;               /* 次文字 */
+  --t3: #9aa6bc;               /* 弱文字 */
+  --line: #edf0f5;             /* 分隔线/弱边框 */
+
+  background-color: var(--bg);
+  color: var(--t1);
   font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
   font-size: 28rpx;
   line-height: 1.5;
 }
 
 .container {
-  padding: 24rpx 28rpx 60rpx;
+  padding: 24rpx 24rpx 60rpx;
 }
 
-/* 卡片 */
+/* 卡片：白底·圆角·弱阴影·无重边框 */
 .card {
-  background: #19233c;
-  border: 1rpx solid #2c3a5c;
-  border-radius: 24rpx;
-  padding: 32rpx 28rpx;
-  margin-bottom: 24rpx;
+  background: var(--card);
+  border-radius: 20rpx;
+  padding: 28rpx 26rpx;
+  margin-bottom: 22rpx;
+  box-shadow: 0 2rpx 16rpx rgba(31,42,60,.06);
 }
 
 .card-title {
   font-size: 30rpx;
   font-weight: 600;
-  color: #eef2fb;
+  color: var(--t1);
   margin-bottom: 8rpx;
 }
 
 .card-hint {
   font-size: 22rpx;
-  color: #94a3c4;
-  margin-bottom: 28rpx;
+  color: var(--t2);
+  margin-bottom: 24rpx;
 }
 
-/* 演示数据横幅（mock 阶段全局提示） */
+/* 演示数据横幅 */
 .demo-banner {
-  background: rgba(245,165,36,.12);
-  border: 1rpx solid rgba(245,165,36,.4);
-  border-radius: 16rpx;
+  background: #fff7ea;
+  border: 1rpx solid #ffe2b0;
+  border-radius: 14rpx;
   padding: 16rpx 20rpx;
   margin-bottom: 20rpx;
   font-size: 22rpx;
-  color: #f5a524;
+  color: #c77b13;
 }
 
-/* 内联 mock 标记：用于连真实数据源都还没有的字段 */
+/* 内联 mock 标记 */
 .mock-tag {
   display: inline-block;
   font-size: 18rpx;
-  color: #f06292;
-  background: rgba(240,98,146,.15);
+  color: var(--up);
+  background: rgba(245,69,92,.12);
   border-radius: 6rpx;
   padding: 0 8rpx;
   margin-left: 8rpx;
   vertical-align: middle;
 }
 
-/* 颜色变量（用 class 模拟）*/
-.text-blue   { color: #5b8cff; }
-.text-green  { color: #22c4a8; }
-.text-yellow { color: #f5a524; }
-.text-purple { color: #8b5cf6; }
-.text-pink   { color: #f06292; }
-.text-muted  { color: #94a3c4; }
-.text-dim    { color: #6b7280; }
+/* 颜色 class（语义化，复用 token）。注意:绿=跌/负,红=涨/正 */
+.text-blue   { color: var(--primary); }
+.text-green  { color: var(--down); }
+.text-yellow { color: #f0a020; }
+.text-purple { color: #7c5cff; }
+.text-pink   { color: var(--up); }
+.text-muted  { color: var(--t2); }
+.text-dim    { color: var(--t3); }

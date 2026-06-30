@@ -1,0 +1,2 @@
+<canvas type="2d" id="{{cid}}" class="uc-canvas" style="height:{{height}}rpx"
+  bindtouchstart="touchStart" bindtouchmove="touchMove" bindtouchend="touchEnd"></canvas>

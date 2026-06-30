@@ -111,15 +111,15 @@ Page({
 
       ctx.beginPath()
       ctx.arc(cx, cy, innerR, 0, Math.PI * 2)
-      ctx.fillStyle = '#19233c'
+      ctx.fillStyle = '#ffffff'
       ctx.fill()
 
-      ctx.fillStyle = '#eef2fb'
+      ctx.fillStyle = '#1f2a3c'
       ctx.font = `bold ${Math.round(r * 0.28)}px sans-serif`
       ctx.textAlign = 'center'
       ctx.textBaseline = 'middle'
       ctx.fillText(total, cx, cy - r * 0.08)
-      ctx.fillStyle = '#94a3c4'
+      ctx.fillStyle = '#9aa6bc'
       ctx.font = `${Math.round(r * 0.16)}px sans-serif`
       ctx.fillText('次功能调用', cx, cy + r * 0.2)
     })
