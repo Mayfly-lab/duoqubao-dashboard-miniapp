@@ -195,3 +195,8 @@
 .fb-pend { background: repeating-linear-gradient(45deg, #6ba3ff, #6ba3ff 5rpx, rgba(107,163,255,.25) 5rpx, rgba(107,163,255,.25) 10rpx); }
 .fb-owe { background: #f0a020; border-radius: 0 5rpx 5rpx 0; }
 .fb-val { width: 150rpx; text-align: right; font-size: 22rpx; color: var(--t2); flex-shrink: 0; }
+
+/* 经营费用 opex 条 + 占位 */
+.opex-fill { background: #f0a020; }
+.opex-placeholder { margin-top: 16rpx; padding-top: 14rpx; border-top: 1rpx solid var(--line); }
+.opex-placeholder .ph-row { display: block; font-size: 22rpx; color: var(--t2); padding: 6rpx 0; }

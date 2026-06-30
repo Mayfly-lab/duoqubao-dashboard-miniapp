@@ -2,7 +2,7 @@
 # 把 duoqubao-api 的接口数据预拉成本地快照 data/api_snapshot.js，
 # 供小程序体验版直接 require（无需配置合法域名 / 调 tunnel）。
 # 重新生成：python3 scripts/fetch_snapshot.py
-import json, os, time, urllib.parse, urllib.request
+import json, os, sys, time, urllib.parse, urllib.request
 
 BASE = "https://associates-please-compaq-org.trycloudflare.com"
 KEY = "f84dcbe9c50806233671945b2025c191559082bf4c2aab02b835cbd55ccaf160"
@@ -70,116 +70,124 @@ def sql(query):
         return []
 
 
+def load_existing():
+    """加载现有快照做底:分段刷新时未刷的段、以及拉空/失败的键,都保留旧值(防领星锁把数据冲空)。"""
+    if not os.path.exists(OUT):
+        return {}
+    try:
+        txt = open(OUT, encoding="utf-8").read()
+        i = txt.index("module.exports =")
+        return json.loads(txt[i + len("module.exports ="):])
+    except Exception as e:
+        print("  ! 旧快照解析失败,从空开始:", str(e)[:80], flush=True)
+        return {}
+
+
+# 分段:global=轻量全局(几十次调用,默认刷) / products=逐产品重活(~460次,显式才刷) / daily=日报+行动 / monthly=月度销售
+SECTIONS = ["global", "products", "daily", "monthly"]
+
+
 def main():
-    snap = {}
-    print("== 全量接口（空 name 一次拿全部）==", flush=True)
-    # 全期口径:days 上限 365(覆盖 2025-06 硬地板至今的全生命周期)。
-    # limit 取 200 拿全集(实测 ~112 个有销售产品;旧值 100 会截断漏 13 个长尾 → 标题"全公司盈亏"对不上)。
-    snap["compare"] = get("/finance/projects/compare", {"days": 365, "limit": 200})
-    snap["projects"] = get("/finance/projects")
-    for ep in ["fees", "payback", "inventory", "ads", "refund", "quality/stars", "quality/reasons",
-               "timeline/pending"]:
-        key = ep.replace("/", "_")
-        snap[key] = get("/dashboard/" + ep, {"name": ""})
-        print(f"  {ep}: {len(snap[key])} 行", flush=True)
+    args = [a.lower() for a in sys.argv[1:] if not a.startswith("-")]
+    if "all" in args:
+        sects = set(SECTIONS)
+    elif args:
+        sects = {a for a in args if a in SECTIONS}
+    else:
+        sects = {"global", "daily", "monthly"}   # 默认不含逐产品重活
+    snap = load_existing()
+    print(f"== 快照分段刷新: {sorted(sects)} | 旧快照已加载 {len(snap)} 键 ==", flush=True)
 
-    # 采购明细(全量·带 PID×采购年份):前端按"每条线活跃代年份(采购额最大年)"逐线收口,
-    # 治款混又不打骨折——空调活跃代=2026,保险箱=2025,猫砂盆=2024…各线不同,不能全局卡一年。
-    # (全期采购含多代,但领星回款只覆盖当前在卖代;取活跃代采购,两侧同代,回本率才成立。)
-    snap["procurement"] = get("/dashboard/procurement_detail", {"name": ""})
-    print(f"  procurement_detail(全量·带年份): {len(snap['procurement'])} 行", flush=True)
+    def put(key, val, label=None):
+        """合并安全:拿到非空才覆盖;空/失败(如撞锁)保留旧值,不冲数据。"""
+        if isinstance(val, dict):
+            n = sum(1 for v in val.values() if v)
+        elif hasattr(val, "__len__"):
+            n = len(val)
+        else:
+            n = 1 if val else 0
+        if n:
+            snap[key] = val
+            print(f"  ✓ {label or key}: {n}", flush=True)
+        else:
+            old = snap.get(key)
+            oldn = len(old) if hasattr(old, "__len__") else (1 if old else 0)
+            print(f"  ! {label or key} 空/失败 → 保留旧值({oldn})", flush=True)
 
-    snap["opex_company"] = get("/dashboard/opex", {"name": ""})
-    print(f"  opex(公司级): {len(snap['opex_company'])} 行", flush=True)
+    if "global" in sects:
+        print("== global 全局接口 ==", flush=True)
+        put("compare", get("/finance/projects/compare", {"days": 365, "limit": 200}))
+        put("projects", get("/finance/projects"))
+        for ep in ["fees", "payback", "inventory", "ads", "refund", "quality/stars", "quality/reasons", "timeline/pending"]:
+            put(ep.replace("/", "_"), get("/dashboard/" + ep, {"name": ""}), ep)
+        put("procurement", get("/dashboard/procurement_detail", {"name": ""}), "procurement(明细·带年份)")
+        put("opex_company", get("/dashboard/opex", {"name": ""}), "opex_company")
+        put("timeseries_monthly", post_sql("lingxing", _TIMESERIES_SQL), "timeseries_monthly")
+        put("capital", post_sql("finance", (
+            "SELECT 公司 AS company, ROUND(账上现金_cny) AS cash_cny, ROUND(平台待回款_usd) AS pending_usd, "
+            "ROUND(在库货值_usd) AS stock_usd, 在库件数 AS stock_qty, ROUND(在途货值_usd) AS transit_usd "
+            "FROM finance_capital_company")), "capital(资金盘)")
+        put("payable_total", post_sql("finance",
+            "SELECT ROUND(SUM(未结)) AS owe_cny FROM finance_v_outstanding WHERE 是否冲账=false"), "payable_total")
 
-    # 产品×月 时间序列(全期·领星口径·USD):前端按 月/季度/年 筛选 + 月柱状(费用拆分)
-    snap["timeseries_monthly"] = post_sql("lingxing", _TIMESERIES_SQL)
-    print(f"  timeseries_monthly(产品×月): {len(snap['timeseries_monthly'])} 行", flush=True)
+    if "products" in sects:
+        names = [p["local_name"] for p in snap.get("compare", [])]
+        print(f"== products 逐产品（{len(names)} 个·重活·~460次调用）==", flush=True)
+        pnl, timeline, pending, opex, reasons = {}, {}, {}, {}, {}
+        for i, name in enumerate(names):
+            pnl[name] = get("/finance/project/pnl", {"name": name, "days": 30})
+            timeline[name] = get("/dashboard/timeline/payout", {"name": name})
+            pending[name] = get("/dashboard/timeline/pending", {"name": name})
+            opex[name] = get("/dashboard/opex", {"name": name})
+            reasons[name] = get("/dashboard/quality/reasons", {"name": name})
+            if (i + 1) % 10 == 0 or i + 1 == len(names):
+                print(f"  {i+1}/{len(names)}", flush=True)
+        put("pnl", pnl); put("timeline_payout", timeline); put("timeline_pending_by", pending)
+        put("opex", opex); put("quality_reasons_by", reasons)
 
-    # 公司资金预览(翰毅:电商公司钱和货最重要,优先于销售/广告):
-    #   账上现金 / 待回款(卡着没回) / 在库+在途货值(货) ← finance_capital_company(金蝶资金盘)
-    #   还要付(欠厂应付) ← finance_v_outstanding 未结
-    snap["capital"] = post_sql("finance", (
-        "SELECT 公司 AS company, ROUND(账上现金_cny) AS cash_cny, ROUND(平台待回款_usd) AS pending_usd, "
-        "ROUND(在库货值_usd) AS stock_usd, 在库件数 AS stock_qty, ROUND(在途货值_usd) AS transit_usd "
-        "FROM finance_capital_company"))
-    snap["payable_total"] = post_sql("finance",
-        "SELECT ROUND(SUM(未结)) AS owe_cny FROM finance_v_outstanding WHERE 是否冲账=false")
-    print(f"  capital(资金盘): {len(snap['capital'])} 公司 · 欠厂 {snap['payable_total']}", flush=True)
+    if "daily" in sects:
+        print("== daily 日报 + 运营行动 ==", flush=True)
+        reports_list = get("/feishu/reports", {"module": "daily_report", "limit": 30})
+        reports_full, seen = [], set()
+        KEEP_FC = {'date', 'USD_总销售额', '回款_USD', '毛利润_USD', '库龄危险'}
+        for r in reports_list:
+            mid = r.get("feishu_msg_id", r["id"])
+            if mid in seen:
+                continue
+            seen.add(mid)
+            req = urllib.request.Request(BASE + f"/feishu/reports/{r['id']}", headers={"X-API-Key": KEY})
+            try:
+                with urllib.request.urlopen(req, timeout=30) as resp:
+                    detail = json.loads(resp.read())
+                fc = detail.get("full_content") or detail.get("data", {}).get("full_content") or {}
+            except Exception as e:
+                print(f"  ! report {r['id']} FAIL: {e}", flush=True)
+                fc = {}
+            r["full_content"] = {k: v for k, v in fc.items() if k in KEEP_FC}
+            reports_full.append(r)
+        put("daily_reports", reports_full, "daily_reports(去重)")
 
-    names = [p["local_name"] for p in snap["compare"]]
-    print(f"== 逐产品 pnl + 时间轴 + opex（{len(names)} 个）==", flush=True)
-    pnl, timeline, pending, opex, reasons = {}, {}, {}, {}, {}
-    for i, name in enumerate(names):
-        pnl[name] = get("/finance/project/pnl", {"name": name, "days": 30})
-        timeline[name] = get("/dashboard/timeline/payout", {"name": name})
-        pending[name] = get("/dashboard/timeline/pending", {"name": name})  # 在途预计到账(未来~1-2月)
-        opex[name] = get("/dashboard/opex", {"name": name})
-        reasons[name] = get("/dashboard/quality/reasons", {"name": name})
-        if (i + 1) % 10 == 0 or i + 1 == len(names):
-            print(f"  {i+1}/{len(names)}", flush=True)
-    snap["pnl"] = pnl
-    snap["timeline_payout"] = timeline
-    snap["timeline_pending_by"] = pending
-    snap["opex"] = opex
-    snap["quality_reasons_by"] = reasons
+        import datetime
+        since = (datetime.date.today() - datetime.timedelta(days=14)).isoformat()
+        KEEP_CA = {'name', 'date', 'created_at', 'category', 'summary', 'description', 'follow_up', 'product'}
+        raw = get("/checkin", {"since": since, "limit": 2000})
+        put("checkin_actions", [{k: v for k, v in c.items() if k in KEEP_CA} for c in raw], "checkin_actions")
 
-    print("== 日报 + 运营行动 ==", flush=True)
-    # 日报：取最近 30 条，逐条补全 full_content
-    reports_list = get("/feishu/reports", {"module": "daily_report", "limit": 30})
-    reports_full = []
-    seen_dates = set()
-    for r in reports_list:
-        # 日报按用户多条推送同内容，按 feishu_msg_id 去重只保留每天一条
-        mid = r.get("feishu_msg_id", r["id"])
-        if mid in seen_dates:
-            continue
-        seen_dates.add(mid)
-        url = BASE + f"/feishu/reports/{r['id']}"
-        req = urllib.request.Request(url, headers={"X-API-Key": KEY})
-        try:
-            with urllib.request.urlopen(req, timeout=30) as resp:
-                detail = json.loads(resp.read())
-            r["full_content"] = detail.get("full_content") or detail.get("data", {}).get("full_content") or {}
-        except Exception as e:
-            print(f"  ! report {r['id']} full_content FAIL: {e}", flush=True)
-            r["full_content"] = {}
-        # 只保留 UI 用到的字段，大幅缩减包体 (raw_rows 等 ~1.2 MB 完全未用)
-        KEEP_FC = {'date', 'USD_总销售额', '回款_USD', '毛利润_USD'}
-        r["full_content"] = {k: v for k, v in r.get("full_content", {}).items() if k in KEEP_FC}
-        reports_full.append(r)
-    snap["daily_reports"] = reports_full
-    print(f"  daily_reports: {len(reports_full)} 条（去重后）", flush=True)
-
-    # 运营行动：最近 14 天（大 limit 一次拿完，避免单日量多被截断）
-    import datetime
-    since = (datetime.date.today() - datetime.timedelta(days=14)).isoformat()
-    raw_checkins = get("/checkin", {"since": since, "limit": 2000})
-    # 只保留 UI 用到的字段，去除 action_id/date_ms/source/open_id 等冗余字段
-    KEEP_CA = {'name', 'date', 'created_at', 'category', 'summary', 'description', 'follow_up', 'product'}
-    snap["checkin_actions"] = [{k: v for k, v in c.items() if k in KEEP_CA} for c in raw_checkins]
-    print(f"  checkin_actions: {len(snap['checkin_actions'])} 行", flush=True)
-
-    # 月度销售（按产品×月聚合，用于前端日期筛选后显示销售/毛利趋势）
-    print("== 月度销售（SQL GROUP BY）==", flush=True)
-    monthly_rows = sql(
-        "SELECT local_name, strftime('%Y-%m', data_date) as ym, "
-        "SUM(amount) as sales, SUM(gross_profit) as profit, SUM(volume) as units "
-        "FROM order_profit_msku "
-        "WHERE data_date >= '2025-06-01' AND local_name != '' "
-        "GROUP BY local_name, ym ORDER BY local_name, ym"
-    )
-    snap["monthly_sales"] = [
-        {"n": r["local_name"], "ym": r["ym"],
-         "s": float(r["sales"] or 0), "p": float(r["profit"] or 0), "u": int(float(r["units"] or 0))}
-        for r in monthly_rows
-    ]
-    print(f"  monthly_sales: {len(snap['monthly_sales'])} 行（产品×月）", flush=True)
+    if "monthly" in sects:
+        print("== monthly 月度销售（SQL）==", flush=True)
+        rows = sql(
+            "SELECT local_name, strftime('%Y-%m', data_date) as ym, "
+            "SUM(amount) as sales, SUM(gross_profit) as profit, SUM(volume) as units "
+            "FROM order_profit_msku WHERE data_date >= '2025-06-01' AND local_name != '' "
+            "GROUP BY local_name, ym ORDER BY local_name, ym")
+        put("monthly_sales", [{"n": r["local_name"], "ym": r["ym"],
+                               "s": float(r["sales"] or 0), "p": float(r["profit"] or 0), "u": int(float(r["units"] or 0))}
+                              for r in rows], "monthly_sales(产品×月)")
 
     snap["_generated"] = time.strftime("%Y-%m-%d %H:%M")
-
     with open(OUT, "w", encoding="utf-8") as f:
-        f.write("// 自动生成的接口快照（体验版用，免调域名）。重生成：python3 scripts/fetch_snapshot.py\n")
+        f.write("// 自动生成的接口快照（体验版用，免调域名）。\n")
+        f.write("// 用法: python3 scripts/fetch_snapshot.py [global|products|daily|monthly|all]  (默认=global daily monthly,不含逐产品重活)\n")
         f.write("module.exports = " + json.dumps(snap, ensure_ascii=False) + "\n")
     print("DONE →", os.path.abspath(OUT), flush=True)
 

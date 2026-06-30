@@ -23,7 +23,7 @@ const fmtCny = n => { const a = Math.abs(n), s = n < 0 ? '-¥' : '¥'; return a 
 Page({
   data: {
     generatedAt: api.generatedAt,
-    kpi: {}, fund: {}, pnlExpanded: false,
+    kpi: {}, fund: {}, inv: {}, opexMod: {}, pnlExpanded: false,
     alerts: [], alertTotal: 0, alertFilter: 'all', alertFilters: ALERT_FILTERS, showAllAlerts: false,
     categories: [], catTotal: 0, catFilter: 'all', catFilters: CAT_FILTERS, showAllCats: false, expandedLine: '',
     loading: true, error: '',
@@ -37,14 +37,17 @@ Page({
   async fetch() {
     this.setData({ loading: true, error: '' })
     try {
-      const [rows, plist, payback, opexCompany, capital, payable, procurement] = await Promise.all([
+      const [rows, plist, payback, opexCompany, capital, payable, procurement, inventory, reports] = await Promise.all([
         api.projectsCompare(), api.projectsList(), api.dash('payback'), api.dash('opex_company'),
-        api.capital(), api.payableTotal(), api.dash('procurement'),
+        api.capital(), api.payableTotal(), api.dash('procurement'), api.dash('inventory'), api.dailyReports(),
       ])
       this._procurement = procurement
-      this._opexCompanyTotal = (opexCompany || []).reduce((s, r) => s + api.num(r.amount_cny), 0)
+      this._opexCompany = opexCompany || []
+      this._opexCompanyTotal = this._opexCompany.reduce((s, r) => s + api.num(r.amount_cny), 0)
       this._capital = capital
       this._payable = payable
+      this._inventory = inventory || []
+      this._reports = reports || []
       const skuMap = {}
       plist.forEach(p => { skuMap[p.local_name] = p.sku_count })
       const raw = rows.map(p => ({
@@ -96,6 +99,34 @@ Page({
       transit: fmtCny(transitCny),
       goods: fmtCny(stockCny + transitCny),   // 货:在库+在途货值
     }
+    // ── 库存模块(公司级):现货/在途/在库货值 + 滞销(库龄危险来自日报) ──
+    const invList = this._inventory || []
+    const xianhuo = invList.reduce((s, r) => s + N(r.xianhuo), 0)
+    const zaitu = invList.reduce((s, r) => s + N(r.zaitu), 0)
+    const fbaTotal = invList.reduce((s, r) => s + N(r.fba_total), 0)
+    // 滞销:取最近一条日报的"库龄危险"(msku超365/270天 + 件数)
+    const fc = (this._reports || []).map(r => r.full_content || {}).find(c => c['库龄危险']) || {}
+    const aged = fc['库龄危险'] || {}
+    const inv = {
+      xianhuo: xianhuo.toLocaleString('en-US'),
+      zaitu: zaitu.toLocaleString('en-US'),
+      fbaTotal: fbaTotal.toLocaleString('en-US'),
+      stockValue: fund.stock, transitValue: fund.transit, qty: fund.stockQty,
+      agedQty365: N(aged.qty_over_365) ? N(aged.qty_over_365).toLocaleString('en-US') : '—',
+      agedMsku365: aged.msku_over_365 != null ? String(aged.msku_over_365) : '—',
+      agedQty270: N(aged.qty_270plus) ? N(aged.qty_270plus).toLocaleString('en-US') : '—',
+    }
+    // ── 经营费用模块:运营费用类目(opex 公司级·真账) + 滞销费/报销(待补·先搭UI) ──
+    const opexRows = (this._opexCompany || []).slice().sort((a, b) => N(b.amount_cny) - N(a.amount_cny))
+    const opexMax = opexRows.length ? N(opexRows[0].amount_cny) : 1
+    const opexMod = {
+      total: fmtCny(this._opexCompanyTotal || 0),
+      items: opexRows.slice(0, 8).map(o => ({
+        category: o.category, costText: fmtCny(N(o.amount_cny)),
+        barWidth: Math.max(6, Math.round(N(o.amount_cny) / opexMax * 100)),
+      })),
+      reimburse: '待补', // 报销依赖员工填报,先占位
+    }
     const cats = groupByCategory(list, this.data._payback)
     const top = cats.length ? Math.max(...cats.map(c => c.sales)) : 1
     const rawCategories = cats.map(c => ({
@@ -107,7 +138,7 @@ Page({
       barWidth: Math.max(4, Math.round(c.sales / top * 100)),
     }))
     const rawAlerts = detect(list)
-    this.setData({ kpi, fund, rawCategories, rawAlerts, expandedLine: '' })
+    this.setData({ kpi, fund, inv, opexMod, rawCategories, rawAlerts, expandedLine: '' })
     this.renderAlerts()
     this.renderCats()
   },

@@ -3,6 +3,26 @@
   <view wx:if="{{loading}}" class="role-hint">加载中…</view>
   <view wx:if="{{error}}" class="role-hint" style="color:#f5455c">{{error}}</view>
 
+  <!-- 待关注（AI 监控）· 老板第一眼 -->
+  <view class="card">
+    <view class="card-head">
+      <view class="card-title">⚠️ 待关注 · {{alertTotal}} 项</view>
+      <filter-dropdown options="{{alertFilters}}" value="{{alertFilter}}" bind:change="onAlertFilterChange" />
+    </view>
+    <view wx:if="{{alertTotal === 0}}" class="empty-hint">当前筛选下无待关注项</view>
+    <view wx:for="{{alerts}}" wx:key="index" class="alert-row alert-{{item.level}}" data-name="{{item.name}}" bindtap="onAlertTap">
+      <view class="alert-tag alert-tag-{{item.level}}">{{item.tag}}</view>
+      <view class="alert-body">
+        <text class="alert-name">{{item.name}}</text>
+        <text class="alert-msg">{{item.msg}}</text>
+      </view>
+      <view class="alert-arrow">›</view>
+    </view>
+    <view wx:if="{{alertTotal > 3}}" class="collapse-toggle" bindtap="onToggleAlerts">
+      {{showAllAlerts ? '收起 ▲' : '展开全部 ' + alertTotal + ' 项 ▼'}}
+    </view>
+  </view>
+
   <!-- 公司资金预览(钱和货优先) -->
   <view class="card">
     <view class="card-title">💰 公司资金预览</view>
@@ -27,6 +47,33 @@
     </view>
   </view>
 
+  <!-- 库存模块 -->
+  <view class="card">
+    <view class="card-title">📦 库存</view>
+    <view class="card-hint">现货可马上卖 · 在途已发未到 · 滞销=库龄超 365 天(占用现金)</view>
+    <view class="fund-grid">
+      <view class="fund-item"><view class="fund-num text-blue">{{inv.xianhuo}}</view><view class="fund-label">现货可售(件)</view></view>
+      <view class="fund-item"><view class="fund-num text-yellow">{{inv.zaitu}}</view><view class="fund-label">在途(件)</view></view>
+      <view class="fund-item"><view class="fund-num">{{inv.stockValue}}</view><view class="fund-label">在库货值</view></view>
+      <view class="fund-item"><view class="fund-num text-pink">{{inv.agedQty365}}</view><view class="fund-label">滞销 ·超365天(件)/{{inv.agedMsku365}}款</view></view>
+    </view>
+  </view>
+
+  <!-- 经营费用模块 -->
+  <view class="card">
+    <view class="card-title">💸 经营费用</view>
+    <view class="card-hint">运营费用=金蝶真账(按对方科目) · 报销待员工填报补全 · 合计 {{opexMod.total}}</view>
+    <view wx:for="{{opexMod.items}}" wx:key="category" class="cost-row">
+      <view class="cost-name">{{item.category}}</view>
+      <view class="cost-bar"><view class="cost-bar-fill opex-fill" style="width:{{item.barWidth}}%"></view></view>
+      <view class="cost-val">{{item.costText}}</view>
+    </view>
+    <view class="opex-placeholder">
+      <text class="ph-row">📋 员工报销 · <text class="text-dim">待填报补全</text></text>
+      <text class="ph-row">🏷️ 滞销长期仓储费 · <text class="text-dim">待接入</text></text>
+    </view>
+  </view>
+
   <!-- 销售盈亏(次要,折叠) -->
   <view class="card sales-card" bindtap="onTogglePnl">
     <view class="card-head">
@@ -45,32 +92,6 @@
         <text class="net-val {{kpi.netLoss ? 'text-pink' : 'text-green'}}">{{kpi.netText}}</text>
         <text class="net-note">毛利换汇 {{kpi.grossCnyText}} − 公司运营费 {{kpi.opexCnyText}}（FX 6.8;仅全公司层可算）</text>
       </view>
-    </view>
-  </view>
-
-  <!-- 待关注（AI 监控） -->
-  <view class="card">
-    <view class="card-head">
-      <view class="card-title">⚠️ 待关注 · {{alertTotal}} 项</view>
-      <filter-dropdown options="{{alertFilters}}" value="{{alertFilter}}" bind:change="onAlertFilterChange" />
-    </view>
-
-    <view wx:if="{{alertTotal === 0}}" class="empty-hint">当前筛选下无待关注项</view>
-
-    <view
-      wx:for="{{alerts}}" wx:key="index"
-      class="alert-row alert-{{item.level}}"
-      data-name="{{item.name}}" bindtap="onAlertTap">
-      <view class="alert-tag alert-tag-{{item.level}}">{{item.tag}}</view>
-      <view class="alert-body">
-        <text class="alert-name">{{item.name}}</text>
-        <text class="alert-msg">{{item.msg}}</text>
-      </view>
-      <view class="alert-arrow">›</view>
-    </view>
-
-    <view wx:if="{{alertTotal > 3}}" class="collapse-toggle" bindtap="onToggleAlerts">
-      {{showAllAlerts ? '收起 ▲' : '展开全部 ' + alertTotal + ' 项 ▼'}}
     </view>
   </view>
 
