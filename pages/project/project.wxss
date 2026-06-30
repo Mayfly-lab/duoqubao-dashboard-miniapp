@@ -63,3 +63,6 @@
 .settle-top { border-bottom: 1rpx solid rgba(255,255,255,.08); }
 .settle-net { margin-top: 6rpx; border-top: 1rpx solid rgba(255,255,255,.12); font-weight: 700; }
 .settle-net .settle-name, .settle-net .settle-val { font-size: 30rpx; }
+
+/* 毛利"真实"小标 */
+.real-flag { display:inline-block; margin-left:6rpx; padding:0 8rpx; font-size:18rpx; color:#18b888; background:rgba(24,184,136,.12); border-radius:5rpx; vertical-align:middle; }

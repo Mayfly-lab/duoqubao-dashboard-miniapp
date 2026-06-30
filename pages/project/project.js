@@ -58,14 +58,16 @@ Page({
         paidText: fmtCny(pm.paid), oweText: fmtCny(pm.outstanding),
       } : null
 
-      // 头部:近 30 天汇总
-      const sum = (arr, k) => arr.reduce((s, r) => s + N(r[k]), 0)
-      const sales = sum(pnl, 'sales'), profit = sum(pnl, 'profit'), adCost = sum(pnl, 'ad_cost')
+      // 头部:全期汇总(与类页/财务同口径),毛利=真实毛利(合同成本修正)。近期看下方趋势图。
+      const cmpRow = compare.find(p => p.local_name === name) || {}
+      const sales = N(cmpRow.sales)
+      const profit = base ? realProfitUsd(base, unitCostOf(unitMap, name), FX) : N(cmpRow.profit)
+      const adCost = N(cmpRow.ad_cost)
       const proj = {
         team: reg ? reg.dept : '',
         salesText: fmtMoney(sales), profitText: fmtMoney(profit), adCostText: fmtMoney(adCost),
         margin_pct: sales ? (profit / sales * 100).toFixed(1) : '0.0',
-        acos_pct: sales ? (adCost / sales * 100).toFixed(1) : '0.0',
+        acos_pct: N(cmpRow.acos_pct).toFixed(1),
         loss: profit < 0,
       }
 

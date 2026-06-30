@@ -1,6 +1,6 @@
 <view class="container">
 
-  <view class="demo-banner">财务/回款/费用/负责人为 <text class="text-green">真实数据</text>（财务近30天 · registry 归属）；报销费用待客户确认。</view>
+  <view class="demo-banner">毛利为 <text class="text-green">真实毛利</text>（全期·合同成本修正，与类页/财务一致）；近期看下方趋势图。</view>
 
   <view wx:if="{{loading}}" class="card">加载中…</view>
   <view wx:if="{{error}}" class="card" style="color:#f5455c">{{error}}</view>
@@ -15,21 +15,12 @@
     <view wx:if="{{locate}}" class="locate">{{locate.line}} 类 · 销售第 {{locate.rank}}/{{locate.total}} · 占类 {{locate.share}}%</view>
     <view class="ph-grid">
       <view class="ph-item"><view class="ph-num text-blue">{{proj.salesText}}</view><view class="ph-lab">销售额</view></view>
-      <view class="ph-item"><view class="ph-num {{proj.loss ? 'text-pink' : 'text-green'}}">{{proj.profitText}}</view><view class="ph-lab">毛利</view></view>
-      <view class="ph-item"><view class="ph-num text-yellow">{{proj.margin_pct}}%</view><view class="ph-lab">毛利率</view></view>
+      <view class="ph-item"><view class="ph-num {{proj.loss ? 'text-pink' : 'text-green'}}">{{proj.profitText}}</view><view class="ph-lab">毛利<text wx:if="{{realProfit}}" class="real-flag">真实</text></view></view>
+      <view class="ph-item"><view class="ph-num text-yellow">{{proj.margin_pct}}%</view><view class="ph-lab">毛利率<text wx:if="{{realProfit}}" class="real-flag">真实</text></view></view>
       <view class="ph-item"><view class="ph-num text-purple">{{proj.acos_pct}}%</view><view class="ph-lab">ACOS</view></view>
       <view class="ph-item"><view class="ph-num">{{proj.adCostText}}</view><view class="ph-lab">广告费</view></view>
     </view>
-  </view>
-
-  <!-- 全期真实毛利(合同成本修正) -->
-  <view wx:if="{{realProfit}}" class="card">
-    <view class="card-title">真实毛利（全期·合同成本修正）</view>
-    <view class="ph-grid">
-      <view class="ph-item"><view class="ph-num {{realProfit.loss ? 'text-pink' : 'text-green'}}">{{realProfit.profitText}}</view><view class="ph-lab">真实毛利</view></view>
-      <view class="ph-item"><view class="ph-num {{realProfit.loss ? 'text-pink' : 'text-green'}}">{{realProfit.marginPct}}%</view><view class="ph-lab">真实毛利率</view></view>
-    </view>
-    <view class="card-hint">领星原报毛利率 {{realProfit.lxMarginPct}}%（员工常漏填成本→虚高）。真实毛利 = 领星毛利 − (销量×合同采购单价 − 领星填的成本)。合同单价 ¥{{realProfit.unitCny}}/件(类级均价·估算) · 未扣海运头程。</view>
+    <view wx:if="{{realProfit}}" class="card-hint">毛利=真实毛利（全期）。领星原报毛利率 {{realProfit.lxMarginPct}}%（员工常漏填成本→虚高）。真实毛利 = 领星毛利 − (销量×合同采购单价 − 领星填的成本)。合同单价 ¥{{realProfit.unitCny}}/件(类级均价·估算) · 未扣海运头程。</view>
   </view>
 
   <!-- 采购(金蝶·本型号 2026款·链路一致) -->
