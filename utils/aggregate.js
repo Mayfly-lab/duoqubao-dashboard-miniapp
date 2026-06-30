@@ -98,4 +98,34 @@ function procurementByModel(detailRows, line) {
   return { byModel, unstocked }
 }
 
-module.exports = { groupByCategory, lineOf, num, procurementOf, procurementByModel, LINE_KW, settleView }
+// ── 真实利润修正(领星成本常漏填→毛利虚高;用合同真实采购单价重算) ──
+// line_unit_cost 行 = {spec:"公司-品类", tot, qty}。去公司前缀、按类聚合 → 类级单位采购成本(CNY)。
+const _COMPANY_PREFIX = /^(多趣猫|格致)-/
+function lineUnitCostMap(unitRows) {
+  const agg = {}
+  ;(unitRows || []).forEach(r => {
+    const line = (r.spec || '').replace(_COMPANY_PREFIX, '')
+    const e = agg[line] || (agg[line] = { tot: 0, qty: 0 })
+    e.tot += num(r.tot); e.qty += num(r.qty)
+  })
+  const m = {}
+  Object.keys(agg).forEach(l => { m[l] = agg[l].qty ? agg[l].tot / agg[l].qty : 0 })  // CNY/件
+  return m
+}
+
+// 该产品类的合同单位成本(CNY):领星 line → 规范名口径(LINE_KW 把"电动猫砂盆"映到"猫砂盆")
+function unitCostOf(unitMap, localName) {
+  const line = lineOf(localName)
+  return unitMap[LINE_KW[line] || line] || 0
+}
+
+// 真实毛利(USD):领星毛利 − (真实COGS − 领星填的成本)。真实COGS = 销量 × 合同单价(换USD)。
+// 无合同单价/无销量 → 不修正,返回领星原值。
+function realProfitUsd(base, unitCny, FX) {
+  const lxProfit = num(base.lx_profit), lxCogs = num(base.lx_cogs), qty = num(base.qty)
+  if (!unitCny || !qty) return lxProfit
+  const realCogs = qty * unitCny / FX
+  return lxProfit - (realCogs - lxCogs)
+}
+
+module.exports = { groupByCategory, lineOf, num, procurementOf, procurementByModel, LINE_KW, settleView, lineUnitCostMap, unitCostOf, realProfitUsd }

@@ -83,14 +83,19 @@
     <view wx:if="{{pnlExpanded}}">
       <view class="kpi-grid">
         <view class="kpi-item"><view class="kpi-num text-blue">{{kpi.sales}}</view><view class="kpi-label">销售额</view></view>
-        <view class="kpi-item"><view class="kpi-num {{kpi.profit[0] === '-' ? 'text-pink' : 'text-green'}}">{{kpi.profit}}</view><view class="kpi-label">毛利</view></view>
-        <view class="kpi-item"><view class="kpi-num text-yellow">{{kpi.marginPct}}%</view><view class="kpi-label">毛利率</view></view>
+        <view class="kpi-item"><view class="kpi-num {{kpi.profit[0] === '-' ? 'text-pink' : 'text-green'}}">{{kpi.profit}}</view><view class="kpi-label">毛利<text wx:if="{{kpi.hasReal}}" class="real-flag">真实</text></view></view>
+        <view class="kpi-item"><view class="kpi-num text-yellow">{{kpi.marginPct}}%</view><view class="kpi-label">毛利率<text wx:if="{{kpi.hasReal}}" class="real-flag">真实</text></view></view>
         <view class="kpi-item"><view class="kpi-num text-purple">{{kpi.acosPct}}%</view><view class="kpi-label">综合 ACOS</view></view>
+      </view>
+      <!-- 真实毛利口径说明 -->
+      <view wx:if="{{kpi.hasReal}}" class="net-line">
+        <text class="net-key">毛利口径</text>
+        <text class="net-note"><text class="text-blue">已用合同成本修正</text>：领星毛利按员工填的成本算,常漏填→虚高(原报毛利率 {{kpi.lxMarginPct}}%)。真实毛利 = 领星毛利 − (销量×<text class="text-blue">合同采购单价</text> − 领星填的成本),即把没填的成本补回去。本次挤掉虚高 {{kpi.correctionText}}。⚠️ 合同单价取类级均价(型号有差异)·未扣海运头程(真实或更低)。</text>
       </view>
       <view class="net-line">
         <text class="net-key">≈ 净利</text>
         <text class="net-val {{kpi.netLoss ? 'text-pink' : 'text-green'}}">{{kpi.netText}}</text>
-        <text class="net-note">毛利换汇 {{kpi.grossCnyText}} − 公司运营费 {{kpi.opexCnyText}}（FX 6.8;仅全公司层可算）</text>
+        <text class="net-note">{{kpi.hasReal ? '真实毛利' : '毛利'}}换汇 {{kpi.grossCnyText}} − 公司运营费 {{kpi.opexCnyText}}（FX 6.8;仅全公司层可算）</text>
       </view>
     </view>
   </view>

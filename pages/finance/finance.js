@@ -1,6 +1,6 @@
 // 老板总览(个人工具·只老板视角):全公司整体盈亏 + 产品类对比(折叠/筛选) + 待关注(折叠/筛选)。
 const api = require('../../utils/api.js')
-const { groupByCategory, procurementByModel } = require('../../utils/aggregate.js')
+const { groupByCategory, procurementByModel, lineUnitCostMap, unitCostOf, realProfitUsd } = require('../../utils/aggregate.js')
 const { detect } = require('../../utils/alerts.js')
 
 const ALERT_FILTERS = [
@@ -37,10 +37,13 @@ Page({
   async fetch() {
     this.setData({ loading: true, error: '' })
     try {
-      const [rows, plist, payback, opexCompany, capital, payable, procurement, inventory, reports] = await Promise.all([
+      const [rows, plist, payback, opexCompany, capital, payable, procurement, inventory, reports, profitBase, unitRows] = await Promise.all([
         api.projectsCompare(), api.projectsList(), api.dash('payback'), api.dash('opex_company'),
         api.capital(), api.payableTotal(), api.dash('procurement'), api.dash('inventory'), api.dailyReports(),
+        api.profitBase(), api.lineUnitCostRows(),
       ])
+      this._profitBase = profitBase
+      this._unitMap = lineUnitCostMap(unitRows)
       this._procurement = procurement
       this._opexCompany = opexCompany || []
       this._opexCompanyTotal = this._opexCompany.reduce((s, r) => s + api.num(r.amount_cny), 0)
@@ -50,12 +53,24 @@ Page({
       this._reports = reports || []
       const skuMap = {}
       plist.forEach(p => { skuMap[p.local_name] = p.sku_count })
-      const raw = rows.map(p => ({
-        local_name: p.local_name,
-        sales: api.num(p.sales), profit: api.num(p.profit), ad_cost: api.num(p.ad_cost),
-        margin_pct: api.num(p.margin_pct), acos_pct: api.num(p.acos_pct),
-        sku_count: skuMap[p.local_name] || '',
-      }))
+      // 真实毛利:每个产品的 profit 直接替换成"合同成本修正后"的真实毛利,KPI/类聚合自动变真实
+      const baseMap = {}; (profitBase || []).forEach(b => { baseMap[b.local_name] = b })
+      const realOf = name => {
+        const b = baseMap[name]
+        return b ? realProfitUsd(b, unitCostOf(this._unitMap, name), FX) : null
+      }
+      const raw = rows.map(p => {
+        const lxProfit = api.num(p.profit)
+        const real = realOf(p.local_name)
+        const profit = real != null ? real : lxProfit
+        const sales = api.num(p.sales)
+        return {
+          local_name: p.local_name,
+          sales, profit, lxProfit, ad_cost: api.num(p.ad_cost),
+          margin_pct: sales ? (profit / sales * 100) : 0, acos_pct: api.num(p.acos_pct),
+          sku_count: skuMap[p.local_name] || '',
+        }
+      })
       this.setData({ rawProducts: raw, _payback: payback, loading: false })
       this.render()
     } catch (e) {
@@ -67,19 +82,24 @@ Page({
   render() {
     const list = this.data.rawProducts
     const sales = list.reduce((s, p) => s + p.sales, 0)
-    const profit = list.reduce((s, p) => s + p.profit, 0)
+    const profit = list.reduce((s, p) => s + p.profit, 0)        // 真实毛利(已修正)
+    const lxProfit = list.reduce((s, p) => s + (p.lxProfit != null ? p.lxProfit : p.profit), 0)  // 领星原值
     const adCost = list.reduce((s, p) => s + p.ad_cost, 0)
-    // 净利(公司级,CNY):毛利换汇 − 公司全量运营费(opex 公司级总额,无归属偏漏问题,只在「全公司」层可这么算)
+    const hasReal = Math.abs(lxProfit - profit) > 1
+    // 净利(公司级,CNY):真实毛利换汇 − 公司全量运营费
     const grossCny = profit * FX
     const opexCny = this._opexCompanyTotal || 0
     const netCny = grossCny - opexCny
-    // 全页统一人民币(领星美元 ×FX),与净利/类页同币种
+    // 全页统一人民币(领星美元 ×FX)。毛利=真实毛利(合同成本修正)
     const kpi = {
       sales: fmtCny(sales * FX), profit: fmtCny(profit * FX),
       marginPct: sales ? (profit / sales * 100).toFixed(1) : '0.0',
       acosPct: sales ? (adCost / sales * 100).toFixed(1) : '0.0',
       netText: fmtCny(netCny), netLoss: netCny < 0,
       grossCnyText: fmtCny(grossCny), opexCnyText: fmtCny(opexCny),
+      hasReal,
+      lxMarginPct: sales ? (lxProfit / sales * 100).toFixed(1) : '0.0',   // 领星虚高
+      correctionText: fmtCny((lxProfit - profit) * FX),                   // 挤掉的虚高额
     }
     // ── 公司资金预览(翰毅:钱和货最重要,放最前) ──
     const cap = this._capital || []

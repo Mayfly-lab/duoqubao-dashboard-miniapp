@@ -43,6 +43,10 @@ const allTimelines = () => Promise.resolve(SNAP.timeline_payout || {})
 const allPendingTimelines = () => Promise.resolve(SNAP.timeline_pending_by || {})
 const allPaybacks = () => Promise.resolve(SNAP.payback || [])
 
+// 真实利润修正:领星 per-产品 销量/领星成本 + 合同类级采购单价
+const profitBase = () => Promise.resolve(SNAP.profit_base || [])
+const lineUnitCostRows = () => Promise.resolve(SNAP.line_unit_cost || [])
+
 // 公司资金预览:资金盘(账上现金/待回款/库存货值 by 公司) + 欠厂应付总额
 const capital = () => Promise.resolve(SNAP.capital || [])
 const payableTotal = () => Promise.resolve((SNAP.payable_total || [])[0] || {})
@@ -61,4 +65,4 @@ const monthlySalesByProduct = () => {
   return Promise.resolve(map)
 }
 
-module.exports = { num, projectsCompare, projectsList, projectCosts, projectPnl, dash, projectTimeline, projectOpex, projectReasons, generatedAt, allTimelines, allPendingTimelines, allPaybacks, capital, payableTotal, dailyReports, checkinActions, monthlySalesByProduct }
+module.exports = { num, projectsCompare, projectsList, projectCosts, projectPnl, dash, projectTimeline, projectOpex, projectReasons, generatedAt, allTimelines, allPendingTimelines, allPaybacks, capital, payableTotal, profitBase, lineUnitCostRows, dailyReports, checkinActions, monthlySalesByProduct }

@@ -12,7 +12,7 @@
       <view class="ph-item"><view class="ph-num text-green">{{kpi.realizedText}}</view><view class="ph-lab">已到账</view></view>
       <view class="ph-item"><view class="ph-num text-yellow">{{kpi.pendingText}}</view><view class="ph-lab">待回款</view></view>
     </view>
-    <view class="card-hint">金额均为人民币（领星美元 × FX 6.8），与下方回本/采购同币种</view>
+    <view class="card-hint">金额均为人民币（领星美元 × FX 6.8）<text wx:if="{{hasReal}}"> · 毛利=<text class="text-green">真实毛利</text>（合同采购单价重算,挤掉领星漏填成本的虚高;类级均价估算·未扣海运）</text></view>
   </view>
 
   <!-- L0 采购未归集:大杂烩/特殊线,金蝶按产品名记账拆不到本类,不显示误导的回本% -->

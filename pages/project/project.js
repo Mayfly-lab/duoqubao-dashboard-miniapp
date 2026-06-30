@@ -2,7 +2,8 @@
 // 财务走快照;归属/asin 走 registry。opex 型号级偏漏(标注)。
 const api = require('../../utils/api.js')
 const registry = require('../../data/registry.js')
-const { lineOf, settleView, procurementByModel } = require('../../utils/aggregate.js')
+const { lineOf, settleView, procurementByModel, lineUnitCostMap, unitCostOf, realProfitUsd } = require('../../utils/aggregate.js')
+const FX = 6.8
 
 function fmtMoney(n) { const a = Math.abs(n), s = n < 0 ? '-$' : '$'; if (a >= 1e6) return s + (a / 1e6).toFixed(2) + 'M'; if (a >= 1e3) return s + (a / 1e3).toFixed(1) + 'k'; return s + Math.round(a) }
 const fmtCny = n => { const a = Math.abs(n); if (a >= 1e8) return '¥' + (a / 1e8).toFixed(2) + '亿'; if (a >= 1e4) return '¥' + (a / 1e4).toFixed(1) + '万'; return '¥' + Math.round(a) }
@@ -11,7 +12,7 @@ const fmtShort = n => { const a = Math.abs(n); if (a >= 1e6) return (n < 0 ? '-'
 
 Page({
   data: {
-    name: '', generatedAt: api.generatedAt, proj: null, locate: null, trend: [], costs: [], settle: null, procurement: null, owners: [],
+    name: '', generatedAt: api.generatedAt, proj: null, locate: null, trend: [], costs: [], settle: null, procurement: null, realProfit: null, owners: [],
     payback: null, inventory: null, refund: null, ads: null,
     timeline: [], stars: [], opexActions: [], reasons: [],
     loading: true, error: '',
@@ -27,15 +28,28 @@ Page({
   async fetch(name) {
     this.setData({ loading: true, error: '' })
     try {
-      const [pnl, fees, payback, inv, refund, ads, timeline, starsAll, compare, opexRows, reasonRows, procAll] = await Promise.all([
+      const [pnl, fees, payback, inv, refund, ads, timeline, starsAll, compare, opexRows, reasonRows, procAll, profitBase, unitRows] = await Promise.all([
         api.projectPnl(name, 30), api.dash('fees', name), api.dash('payback', name),
         api.dash('inventory', name), api.dash('refund', name), api.dash('ads', name),
         api.projectTimeline(name), api.dash('quality/stars', name),
         api.projectsCompare(30, 100), api.projectOpex(name), api.projectReasons(name),
-        api.dash('procurement', name),
+        api.dash('procurement', name), api.profitBase(), api.lineUnitCostRows(),
       ])
       const reg = registry.byProduct[name] || null
       const N = api.num
+
+      // 全期真实毛利(合同成本修正):本产品 profit_base + 类级合同单价
+      const base = (profitBase || []).find(b => b.local_name === name)
+      const unitMap = lineUnitCostMap(unitRows)
+      const realProfit = base ? (() => {
+        const real = realProfitUsd(base, unitCostOf(unitMap, name), FX)
+        const bs = N(base.sales), lx = N(base.lx_profit)
+        return {
+          profitText: fmtMoney(real), marginPct: bs ? (real / bs * 100).toFixed(1) : '0.0',
+          loss: real < 0, lxMarginPct: bs ? (lx / bs * 100).toFixed(1) : '0.0',
+          unitCny: Math.round(unitCostOf(unitMap, name)),
+        }
+      })() : null
 
       // 该型号采购(金蝶·活跃代):复用 procurementByModel(逐线活跃代+model_map),取本型号那份,与类页一致
       const pm = procurementByModel(procAll, lineOf(name)).byModel[name]
@@ -127,7 +141,7 @@ Page({
       ].filter(Boolean) : []
 
       this.setData({
-        proj, locate, trend, costs, settle, procurement: procurementCard, owners, timeline: tl, stars, opexActions, reasons,
+        proj, locate, trend, costs, settle, procurement: procurementCard, realProfit, owners, timeline: tl, stars, opexActions, reasons,
         payback: paybackData, inventory: inventoryData, refund: refundData, ads: adsData, loading: false,
       })
     } catch (e) {

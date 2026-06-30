@@ -4,7 +4,7 @@
 // 日期筛选:月度销售额/毛利来自 monthly_sales（领星日粒度聚合到月）。
 const api = require('../../utils/api.js')
 const registry = require('../../data/registry.js')
-const { lineOf } = require('../../utils/aggregate.js')
+const { lineOf, lineUnitCostMap, unitCostOf, realProfitUsd } = require('../../utils/aggregate.js')
 
 const FX = 6.8
 
@@ -30,13 +30,22 @@ Page({
   async fetch() {
     this.setData({ loading: true, error: '' })
     try {
-      const [compare, timelines, pendingTimelines, paybacks, monthlySales] = await Promise.all([
+      const [compare, timelines, pendingTimelines, paybacks, monthlySales, profitBase, unitRows] = await Promise.all([
         api.projectsCompare(),
         api.allTimelines(),
         api.allPendingTimelines(),
         api.allPaybacks(),
         api.monthlySalesByProduct(),
+        api.profitBase(),
+        api.lineUnitCostRows(),
       ])
+      // 真实毛利:把 compare 的 profit 替换成合同成本修正后的真实值(无筛选时人/类/产品毛利用它)
+      const baseMap = {}; (profitBase || []).forEach(b => { baseMap[b.local_name] = b })
+      const unitMap = lineUnitCostMap(unitRows)
+      compare.forEach(p => {
+        const b = baseMap[p.local_name]
+        if (b) p.profit = realProfitUsd(b, unitCostOf(unitMap, p.local_name), FX)
+      })
       this._timelines = timelines
       this._pendingTimelines = pendingTimelines
       this._monthlySales = monthlySales

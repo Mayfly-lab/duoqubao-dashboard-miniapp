@@ -1,7 +1,7 @@
 // 类详细看板(完整,向 mockup 看齐):L0 双进度条 + L1 四问 + L0.5 时间轴 + L2 五下钻 + 型号列表。
 // 全部从快照按「类」聚合。采购按 line 关键词匹配 procurement;USD 段 ×FX 统一人民币。
 const api = require('../../utils/api.js')
-const { lineOf, procurementOf, procurementByModel, settleView } = require('../../utils/aggregate.js')
+const { lineOf, procurementOf, procurementByModel, settleView, lineUnitCostMap, unitCostOf, realProfitUsd } = require('../../utils/aggregate.js')
 const registry = require('../../data/registry.js')
 
 const FX = 6.8                                   // USD→CNY(与时间轴口径一致)
@@ -29,10 +29,23 @@ Page({
   async fetch(line) {
     this.setData({ loading: true, error: '' })
     try {
-      const [compare, payback, inventory, feesAll, adsAll, refundAll, starsAll, procurement] = await Promise.all([
+      const [compare, payback, inventory, feesAll, adsAll, refundAll, starsAll, procurement, profitBase, unitRows] = await Promise.all([
         api.projectsCompare(30, 100), api.dash('payback'), api.dash('inventory'),
         api.dash('fees'), api.dash('ads'), api.dash('refund'), api.dash('quality/stars'), api.dash('procurement'),
+        api.profitBase(), api.lineUnitCostRows(),
       ])
+      // 真实毛利:把每个产品的 profit/margin_pct 替换成合同成本修正后的真实值
+      const baseMap = {}; (profitBase || []).forEach(b => { baseMap[b.local_name] = b })
+      const unitMap = lineUnitCostMap(unitRows)
+      this._hasReal = (profitBase || []).length > 0
+      compare.forEach(p => {
+        const b = baseMap[p.local_name]
+        if (!b) return
+        const real = realProfitUsd(b, unitCostOf(unitMap, p.local_name), FX)
+        p._lxProfit = api.num(p.profit)
+        p.profit = real
+        p.margin_pct = api.num(p.sales) ? (real / api.num(p.sales) * 100) : 0
+      })
       const products = compare.filter(p => lineOf(p.local_name) === line)
       const names = products.map(p => p.local_name)
       const nameSet = new Set(names)
@@ -176,7 +189,7 @@ Page({
         .map(s => ({ asin: s.asin, star: s.star, reviews: s.reviews, low: N(s.star) < 3.5 }))
         .sort((a, b) => N(a.star) - N(b.star))
 
-      this.setData({ kpi, level0, four, settle, models, unmappedText, timeline, fees, ads, refund, inventory: inv, stars, opex, loading: false })
+      this.setData({ kpi, level0, four, settle, models, unmappedText, hasReal: this._hasReal, timeline, fees, ads, refund, inventory: inv, stars, opex, loading: false })
     } catch (e) {
       this.setData({ loading: false, error: '加载失败：' + (e.message || e) })
     }

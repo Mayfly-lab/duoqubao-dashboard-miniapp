@@ -200,3 +200,9 @@
 .opex-fill { background: #f0a020; }
 .opex-placeholder { margin-top: 16rpx; padding-top: 14rpx; border-top: 1rpx solid var(--line); }
 .opex-placeholder .ph-row { display: block; font-size: 22rpx; color: var(--t2); padding: 6rpx 0; }
+
+/* 真实毛利标签 */
+.net-tag { font-size: 24rpx; font-weight: 600; color: var(--t2); }
+
+/* 毛利"真实"小标 */
+.real-flag { display:inline-block; margin-left:6rpx; padding:0 8rpx; font-size:18rpx; color:#18b888; background:rgba(24,184,136,.12); border-radius:5rpx; vertical-align:middle; }

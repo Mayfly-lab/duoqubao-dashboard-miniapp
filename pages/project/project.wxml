@@ -22,6 +22,16 @@
     </view>
   </view>
 
+  <!-- 全期真实毛利(合同成本修正) -->
+  <view wx:if="{{realProfit}}" class="card">
+    <view class="card-title">真实毛利（全期·合同成本修正）</view>
+    <view class="ph-grid">
+      <view class="ph-item"><view class="ph-num {{realProfit.loss ? 'text-pink' : 'text-green'}}">{{realProfit.profitText}}</view><view class="ph-lab">真实毛利</view></view>
+      <view class="ph-item"><view class="ph-num {{realProfit.loss ? 'text-pink' : 'text-green'}}">{{realProfit.marginPct}}%</view><view class="ph-lab">真实毛利率</view></view>
+    </view>
+    <view class="card-hint">领星原报毛利率 {{realProfit.lxMarginPct}}%（员工常漏填成本→虚高）。真实毛利 = 领星毛利 − (销量×合同采购单价 − 领星填的成本)。合同单价 ¥{{realProfit.unitCny}}/件(类级均价·估算) · 未扣海运头程。</view>
+  </view>
+
   <!-- 采购(金蝶·本型号 2026款·链路一致) -->
   <view wx:if="{{procurement}}" class="card">
     <view class="card-title">采购（金蝶 · 本型号活跃代）</view>

@@ -129,6 +129,15 @@ def main():
             "FROM finance_capital_company")), "capital(资金盘)")
         put("payable_total", post_sql("finance",
             "SELECT ROUND(SUM(未结)) AS owe_cny FROM finance_v_outstanding WHERE 是否冲账=false"), "payable_total")
+        # 真实利润修正:领星 per-产品 销量+领星填的成本(成本常漏填→毛利虚高);用合同真实采购单价重算
+        put("profit_base", post_sql("lingxing", (
+            "SELECT local_name, ROUND(SUM(net_amount)) AS sales, ROUND(SUM(gross_profit)) AS lx_profit, "
+            "ROUND(ABS(SUM(purchase_costs))) AS lx_cogs, ROUND(SUM(volume)) AS qty "
+            f"FROM order_profit_msku WHERE {_SCOPE} AND local_name <> '' GROUP BY local_name")), "profit_base")
+        # 合同采购单价(by 规范名=公司-品类;公司前缀前端去,聚到类级均价)
+        put("line_unit_cost", post_sql("finance", (
+            "SELECT 规范名 AS spec, ROUND(SUM(采购总额)) AS tot, SUM(采购数量) AS qty "
+            "FROM finance_dim_contract WHERE 是否子项=false AND 采购数量>0 GROUP BY 规范名")), "line_unit_cost")
 
     if "products" in sects:
         names = [p["local_name"] for p in snap.get("compare", [])]
