@@ -46,6 +46,15 @@ Page({
         const b = baseMap[p.local_name]
         if (b) p.profit = realProfitUsd(b, unitCostOf(unitMap, p.local_name), FX)
       })
+      // 月度真实毛利修正:每件成本差 delta = 合同单价(USD) − 领星实际填的单位成本(USD)。
+      // 逐月 真实毛利 = 领星月毛利 − 月销量×delta。求和=全期真实,和 compare/财务口径一致。
+      this._deltaUnit = {}
+      ;(profitBase || []).forEach(b => {
+        const qty = api.num(b.qty), unitCny = unitCostOf(unitMap, b.local_name)
+        if (qty > 0 && unitCny > 0) {
+          this._deltaUnit[b.local_name] = unitCny / FX - api.num(b.lx_cogs) / qty
+        }
+      })
       this._timelines = timelines
       this._pendingTimelines = pendingTimelines
       this._monthlySales = monthlySales
@@ -85,17 +94,19 @@ Page({
   // Sum monthly_sales for one product within the date range; returns {s, p} in USD
   _filteredSales(name) {
     const { startYm, endYm } = this.data
+    const delta = (this._deltaUnit || {})[name] || 0   // 真实毛利修正:每件成本差
     return ((this._monthlySales || {})[name] || [])
       .filter(m => (!startYm || m.ym >= startYm) && (!endYm || m.ym <= endYm))
-      .reduce((acc, m) => ({ s: acc.s + m.s, p: acc.p + m.p }), { s: 0, p: 0 })
+      .reduce((acc, m) => ({ s: acc.s + m.s, p: acc.p + (m.p - (m.u || 0) * delta) }), { s: 0, p: 0 })
   },
 
   // 月度利润 uCharts 正负柱(第三方库·canvas)。盈利向上/亏损向下,uCharts 自动按正负画轴上下。
   _buildProfitTimeline(name) {
     const { startYm, endYm } = this.data
     const inRange = ym => (!startYm || ym >= startYm) && (!endYm || ym <= endYm)
+    const delta = (this._deltaUnit || {})[name] || 0   // 真实毛利修正:逐月扣回每件成本差
     const profit = {}
-    ;((this._monthlySales || {})[name] || []).forEach(m => { if (inRange(m.ym)) profit[m.ym] = m.p || 0 })
+    ;((this._monthlySales || {})[name] || []).forEach(m => { if (inRange(m.ym)) profit[m.ym] = (m.p || 0) - (m.u || 0) * delta })
     const yms = Object.keys(profit).sort()
     if (!yms.length) return null
     const k = v => Math.round((v || 0) / 100) / 10   // → $千(k),1 位小数

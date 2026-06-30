@@ -186,10 +186,12 @@ def main():
 
     if "monthly" in sects:
         print("== monthly 月度销售（SQL）==", flush=True)
+        # ⚠️ 与 compare/profit_base 同口径(_SCOPE 只多趣/格致 + 近365天窗口),否则团队页月度毛利和财务对不齐
         rows = sql(
             "SELECT local_name, strftime('%Y-%m', data_date) as ym, "
             "SUM(amount) as sales, SUM(gross_profit) as profit, SUM(volume) as units "
-            "FROM order_profit_msku WHERE data_date >= '2025-06-01' AND local_name != '' "
+            f"FROM order_profit_msku WHERE {_SCOPE} AND local_name != '' "
+            "AND data_date >= CURRENT_DATE - INTERVAL 365 DAY "
             "GROUP BY local_name, ym ORDER BY local_name, ym")
         put("monthly_sales", [{"n": r["local_name"], "ym": r["ym"],
                                "s": float(r["sales"] or 0), "p": float(r["profit"] or 0), "u": int(float(r["units"] or 0))}

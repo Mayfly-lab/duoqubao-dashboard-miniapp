@@ -81,5 +81,5 @@
   </view>
   </block>
 
-  <view class="foot-note">销售/毛利：领星日粒度按月聚合（monthly_sales）· 无筛选=全期 · 数据快照 {{generatedAt}}</view>
+  <view class="foot-note">毛利=真实毛利（合同成本修正，逐月扣回每件成本差，与财务/类/产品页一致）· 无筛选=全期 · 数据快照 {{generatedAt}}</view>
 </view>
