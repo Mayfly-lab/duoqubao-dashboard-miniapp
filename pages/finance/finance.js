@@ -1,6 +1,6 @@
 // 老板总览(个人工具·只老板视角):全公司整体盈亏 + 产品类对比(折叠/筛选) + 待关注(折叠/筛选)。
 const api = require('../../utils/api.js')
-const { groupByCategory, procurementByModel, lineUnitCostMap, unitCostOf, realProfitUsd } = require('../../utils/aggregate.js')
+const { groupByCategory, procurementByModel, procurementOf, lineUnitCostMap, unitCostOf, realProfitUsd } = require('../../utils/aggregate.js')
 const registry = require('../../data/registry.js')
 const { detect } = require('../../utils/alerts.js')
 
@@ -198,15 +198,26 @@ Page({
       top3: opexRows.slice(0, 3).map(o => o.category + ' ' + fmtCny(N(o.amount_cny))).join(' · '),
     }
     const cats = groupByCategory(list, this.data._payback)
-    const top = cats.length ? Math.max(...cats.map(c => c.sales)) : 1
-    const rawCategories = cats.map(c => ({
-      line: c.line, count: c.count, sales: c.sales, profit: c.profit, products: c.products,
-      salesText: fmtCny(c.sales * FX), profitText: fmtCny(c.profit * FX),
-      marginPct: c.margin_pct.toFixed(1),
-      realizedText: fmtCny(c.realized * FX), pendingText: fmtCny(c.pending * FX),
-      loss: c.profit < 0,
-      barWidth: Math.max(4, Math.round(c.sales / top * 100)),
-    }))
+    // 类级回本:能收回(已到账+待回款) vs 已支付(采购活跃代) → 盈利。header/条改回本口径,与展开一致。
+    const catRb = cats.map(c => {
+      const recover = (c.realized + c.pending) * FX
+      const paid = procurementOf(this._procurement || [], c.line).paid
+      return { line: c.line, recover, paid, profitBack: recover - paid }
+    })
+    const rbMap = {}; catRb.forEach(r => { rbMap[r.line] = r })
+    const topRecover = Math.max(1, ...catRb.map(r => r.recover))
+    const rawCategories = cats.map(c => {
+      const rb = rbMap[c.line]
+      return {
+        line: c.line, count: c.count, sales: c.sales, profit: c.profit, products: c.products,
+        recoverText: fmtCny(rb.recover), paidText: fmtCny(rb.paid),
+        profitBackText: (rb.profitBack >= 0 ? '+' : '') + fmtCny(rb.profitBack), profitBackLoss: rb.profitBack < 0,
+        marginPct: c.margin_pct.toFixed(1), salesText: fmtCny(c.sales * FX),
+        realizedText: fmtCny(c.realized * FX), pendingText: fmtCny(c.pending * FX),
+        loss: c.profit < 0,
+        barWidth: Math.max(4, Math.round(rb.recover / topRecover * 100)),
+      }
+    })
     const rawAlerts = detect(list)
     this.setData({ kpi, fund, inv, sales: salesCard, opexMod, cashDetail, oweSuppliers, rawCategories, rawAlerts, expandedLine: '' })
     this.renderAlerts()

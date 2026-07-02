@@ -289,3 +289,17 @@
 .fb-dot-paid { background: #f0a020; }
 .fb-paid { background: #f0a020; }
 .fb-back { font-size: 21rpx; font-weight: 700; margin-left: 10rpx; }
+
+/* ═══ 资金卡下钻明细·放大易点(覆盖上面小号) ═══ */
+.fc-dtitle { font-size: 26rpx; margin-bottom: 14rpx; }
+.fc-dhint { font-size: 20rpx; color: var(--primary); margin: 4rpx 0 10rpx; }
+.fc-drow { gap: 12rpx; padding: 16rpx 0; min-height: 56rpx; }
+.fc-drow-tap { padding: 16rpx 12rpx; margin: 4rpx 0; background: var(--tint); border-radius: 10rpx; }
+.fc-dname { font-size: 25rpx; flex: 0 0 210rpx; }
+.fc-dval { font-size: 25rpx; min-width: 130rpx; }
+.fc-dchev { font-size: 21rpx; color: var(--primary); flex: 0 0 auto; margin-left: 8rpx; }
+.fc-contracts { padding: 8rpx 0 12rpx 20rpx; }
+.fc-crow { padding: 10rpx 12rpx; font-size: 22rpx; }
+
+/* 类对比 header 回本口径小字 */
+.cat-sub2 { font-size: 17rpx; color: var(--t3); margin-left: 8rpx; }

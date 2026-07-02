@@ -55,11 +55,13 @@
     <!-- 下钻:欠供应商 → 合同 -->
     <view wx:if="{{fundSeg === 'owe'}}" class="fc-detail">
       <view class="fc-dtitle">欠供应商 · {{oweSuppliers.length}} 家<text class="fc-dclose" bindtap="onFundClose">收起 ✕</text></view>
+      <view class="fc-dhint">👇 点供应商看它的合同明细</view>
       <view wx:for="{{oweSuppliers}}" wx:key="supplier" class="fc-sup">
-        <view class="fc-drow" data-supplier="{{item.supplier}}" bindtap="onSupplierTap">
-          <text class="fc-dname">{{item.supplier}} <text class="fc-dexp">{{expandedSupplier === item.supplier ? '▲' : '▼'}}</text></text>
+        <view class="fc-drow fc-drow-tap" data-supplier="{{item.supplier}}" bindtap="onSupplierTap">
+          <text class="fc-dname">{{item.supplier}}</text>
           <view class="fc-dbar"><view class="fc-dbar-f fc-df-owe" style="width:{{item.pct}}%"></view></view>
           <text class="fc-dval text-pink">{{item.oweText}}</text>
+          <text class="fc-dchev">{{expandedSupplier === item.supplier ? '▲' : '合同 ›'}}</text>
         </view>
         <view wx:if="{{expandedSupplier === item.supplier}}" class="fc-contracts">
           <view wx:for="{{item.contracts}}" wx:for-item="c" wx:key="nm" class="fc-crow">
@@ -139,7 +141,7 @@
       <view class="card-title">产品类对比（{{catTotal}} 类）</view>
       <filter-dropdown options="{{catFilters}}" value="{{catFilter}}" bind:change="onCatFilterChange" />
     </view>
-    <view class="card-hint">点类展开看整体指标 · 红色为亏损类 · bar 按销售额</view>
+    <view class="card-hint">点类展开看回本明细 · bar 按能收回 · 盈利=能收回−已支付</view>
 
     <view wx:if="{{catTotal === 0}}" class="empty-hint">当前筛选下无产品类</view>
 
@@ -153,9 +155,9 @@
           <view class="cat-meta">{{item.count}} 个型号</view>
         </view>
         <view class="cat-right">
-          <view class="cat-sales">{{item.salesText}}</view>
-          <view class="cat-sub {{item.loss ? 'text-pink' : 'text-green'}}">
-            毛利 {{item.profitText}} · {{item.marginPct}}%
+          <view class="cat-sales">能收回 {{item.recoverText}}</view>
+          <view class="cat-sub {{item.profitBackLoss ? 'text-pink' : 'text-green'}}">
+            盈利 {{item.profitBackText}} <text class="cat-sub2">已付 {{item.paidText}}</text>
           </view>
         </view>
         <text class="go-arrow">{{item.expanded ? '▲' : '▼'}}</text>
