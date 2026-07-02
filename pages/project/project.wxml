@@ -1,6 +1,6 @@
 <view class="container">
 
-  <view class="demo-banner">毛利为 <text class="text-green">真实毛利</text>（全期·合同成本修正，与类页/财务一致）；近期看下方趋势图。</view>
+  <view class="demo-banner">毛利为 <text class="text-green">真实毛利</text>（全期·合同成本修正,与类页/财务一致）</view>
 
   <view wx:if="{{loading}}" class="card">加载中…</view>
   <view wx:if="{{error}}" class="card" style="color:#f5455c">{{error}}</view>
@@ -37,7 +37,7 @@
     </view>
   </view>
 
-  <!-- 头部指标 -->
+  <!-- 头部指标(销售/真实毛利/ACOS) -->
   <view class="card">
     <view class="ph-top">
       <view class="ph-name">{{name}}<text class="ph-team">{{proj.team}}</text></view>
@@ -51,94 +51,20 @@
       <view class="ph-item"><view class="ph-num text-purple">{{proj.acos_pct}}%</view><view class="ph-lab">ACOS</view></view>
       <view class="ph-item"><view class="ph-num">{{proj.adCostText}}</view><view class="ph-lab">广告费</view></view>
     </view>
-    <view wx:if="{{realProfit}}" class="card-hint">毛利=真实毛利（全期）。领星原报毛利率 {{realProfit.lxMarginPct}}%（员工常漏填成本→虚高）。真实毛利 = 领星毛利 − (销量×合同采购单价 − 领星填的成本)。合同单价 ¥{{realProfit.unitCny}}/件(类级均价·估算) · 未扣海运头程。</view>
+    <view wx:if="{{realProfit}}" class="card-hint">领星原报毛利率 {{realProfit.lxMarginPct}}%(常漏填成本→虚高)。真实毛利 = 领星毛利 − (销量×合同采购单价 − 领星填的成本)。合同单价 ¥{{realProfit.unitCny}}/件(类级估算)· 未扣海运。</view>
   </view>
 
-  <!-- 采购(金蝶·本型号 2026款·链路一致) -->
-  <view wx:if="{{procurement}}" class="card">
-    <view class="card-title">采购（金蝶 · 本型号活跃代）</view>
-    <view class="ph-grid">
-      <view class="ph-item"><view class="ph-num">{{procurement.amountText}}</view><view class="ph-lab">采购额 · {{procurement.qty}}台</view></view>
-      <view class="ph-item"><view class="ph-num text-green">{{procurement.paidText}}</view><view class="ph-lab">已付</view></view>
-      <view class="ph-item"><view class="ph-num text-yellow">{{procurement.oweText}}</view><view class="ph-lab">欠厂</view></view>
-    </view>
-  </view>
-
-  <!-- 回款 -->
-  <view wx:if="{{payback}}" class="card">
-    <view class="card-title">回款</view>
-    <view class="ph-grid">
-      <view class="ph-item"><view class="ph-num text-green">{{payback.realizedText}}</view><view class="ph-lab">已到账</view></view>
-      <view class="ph-item"><view class="ph-num text-yellow">{{payback.pendingText}}</view><view class="ph-lab">待回款</view></view>
-    </view>
-  </view>
-
-  <!-- 库存状况 -->
+  <!-- 📦 库存 -->
   <view wx:if="{{inventory}}" class="card">
-    <view class="card-title">库存状况</view>
+    <view class="card-title">📦 库存</view>
     <view class="ph-grid">
-      <view class="ph-item"><view class="ph-num">{{inventory.xianhuo}}</view><view class="ph-lab">现货</view></view>
-      <view class="ph-item"><view class="ph-num">{{inventory.zaitu}}</view><view class="ph-lab">在途</view></view>
+      <view class="ph-item"><view class="ph-num text-blue">{{inventory.xianhuo}}</view><view class="ph-lab">现货</view></view>
+      <view class="ph-item"><view class="ph-num text-yellow">{{inventory.zaitu}}</view><view class="ph-lab">在途</view></view>
       <view class="ph-item"><view class="ph-num">{{inventory.fbaTotal}}</view><view class="ph-lab">FBA 合计</view></view>
     </view>
   </view>
 
-  <!-- 回款时间轴（L0.5） -->
-  <view wx:if="{{timeline.length}}" class="card">
-    <view class="card-title">回款时间轴（月度到账 · USD）</view>
-    <view class="card-hint">柱高=当月到账额，红=负值（退款&gt;订单·早期/刷单）</view>
-    <view wx:for="{{timeline}}" wx:key="ym" class="tl-row">
-      <text class="tl-ym">{{item.ym}}</text>
-      <view class="tl-bar2"><view class="tl-fill {{item.neg ? 'tl-fill-neg' : ''}}" style="width:{{item.w}}%"></view></view>
-      <text class="tl-amt {{item.neg ? 'text-pink' : 'text-green'}}">{{item.valShort}}</text>
-    </view>
-  </view>
-
-  <!-- 广告 -->
-  <view wx:if="{{ads}}" class="card">
-    <view class="card-title">广告效率</view>
-    <view class="ph-grid">
-      <view class="ph-item"><view class="ph-num">{{ads.spendText}}</view><view class="ph-lab">广告花费</view></view>
-      <view class="ph-item"><view class="ph-num text-green">{{ads.revText}}</view><view class="ph-lab">广告销售</view></view>
-      <view class="ph-item"><view class="ph-num text-purple">{{ads.acos}}%</view><view class="ph-lab">ACOS</view></view>
-    </view>
-  </view>
-
-  <!-- 退款 -->
-  <view wx:if="{{refund}}" class="card">
-    <view class="card-title">退款</view>
-    <view class="ph-grid">
-      <view class="ph-item"><view class="ph-num text-pink">{{refund.rate}}%</view><view class="ph-lab">退款率</view></view>
-      <view class="ph-item"><view class="ph-num">{{refund.returns}}</view><view class="ph-lab">退货量</view></view>
-      <view class="ph-item"><view class="ph-num text-pink">{{refund.amtText}}</view><view class="ph-lab">退款额</view></view>
-    </view>
-  </view>
-
-  <!-- 质量·星级（L2） -->
-  <view wx:if="{{stars.length}}" class="card">
-    <view class="card-title">质量 · 星级（by ASIN）</view>
-    <view wx:for="{{stars}}" wx:key="asin" class="owner-row">
-      <view class="owner-name">{{item.asin}}<text class="owner-team">{{item.reviews}} 评论</text></view>
-      <view class="owner-right">
-        <view class="{{item.low ? 'text-pink' : 'text-green'}}">★ {{item.star}}</view>
-      </view>
-    </view>
-  </view>
-
-  <!-- 盈亏趋势 -->
-  <view class="card">
-    <view class="card-title">近 7 天趋势</view>
-    <view class="card-hint">柱高=销售额，下方数字=当日毛利（红=亏损）</view>
-    <view class="chart">
-      <view wx:for="{{trend}}" wx:key="d" class="bar-col">
-        <view class="bar" style="height:{{item.h}}rpx"></view>
-        <view class="bar-profit {{item.loss ? 'text-pink' : 'text-green'}}">{{item.profitText}}</view>
-        <view class="bar-date">{{item.d}}</view>
-      </view>
-    </view>
-  </view>
-
-  <!-- 负责员工（registry 归属） -->
+  <!-- 负责员工 -->
   <view class="card">
     <view class="card-title">负责员工</view>
     <view wx:for="{{owners}}" wx:key="name" class="owner-row">
@@ -146,58 +72,7 @@
     </view>
     <view wx:if="{{owners.length === 0}}" class="empty">未在 registry 找到归属</view>
   </view>
-
-  <!-- 亚马逊结算视角:到手 = 销售 − 各项(对齐 mockup) -->
-  <view wx:if="{{settle}}" class="card">
-    <view class="card-title">结算视角 · 到手 {{settle.netText}}（{{settle.netPct}}%）</view>
-    <view class="card-hint">全期·USD ⚠️ 平台结算后 ≠ 毛利（未扣采购成本 COGS,口径不同于上方 KPI 毛利）</view>
-    <view class="settle-row settle-top">
-      <view class="settle-name">销售额</view>
-      <view class="settle-val text-green">{{settle.salesText}}</view>
-    </view>
-    <view wx:for="{{settle.items}}" wx:key="label" class="settle-row">
-      <view class="settle-name">− {{item.label}}</view>
-      <view class="settle-bar"><view class="settle-bar-fill" style="width:{{item.w}}%"></view></view>
-      <view class="settle-val text-pink">{{item.valText}}</view>
-    </view>
-    <view class="settle-row settle-net">
-      <view class="settle-name">= 到手</view>
-      <view class="settle-val {{settle.netLoss ? 'text-pink' : 'text-green'}}">{{settle.netText}}</view>
-    </view>
-  </view>
-
-  <!-- 费用拆解 -->
-  <view class="card">
-    <view class="card-title">费用拆解</view>
-    <view wx:for="{{costs}}" wx:key="description" class="cost-row">
-      <view class="cost-name">{{item.description}}</view>
-      <view class="cost-bar"><view class="cost-bar-fill" style="width:{{item.barWidth}}%"></view></view>
-      <view class="cost-val">{{item.costText}}</view>
-    </view>
-    <view wx:if="{{costs.length === 0}}" class="empty">暂无费用数据</view>
-  </view>
-
-  <!-- 费用动作(opex 型号级) -->
-  <view wx:if="{{opexActions.length}}" class="card">
-    <view class="card-title">费用动作 · 运营报销（¥）</view>
-    <view class="card-hint">测评=刷单/测评 · ⚠️ 型号级偏漏(摘要不含本型号名的报销会漏,完整看类看板)</view>
-    <view wx:for="{{opexActions}}" wx:key="category" class="cost-row">
-      <view class="cost-name">{{item.category}}</view>
-      <view class="cost-bar"><view class="cost-bar-fill opex-fill" style="width:{{item.barWidth}}%"></view></view>
-      <view class="cost-val opex-val">{{item.costText}}</view>
-    </view>
-  </view>
-
-  <!-- 退货原因 -->
-  <view wx:if="{{reasons.length}}" class="card">
-    <view class="card-title">退货原因</view>
-    <view wx:for="{{reasons}}" wx:key="reason" class="cost-row">
-      <view class="cost-name">{{item.reason}}</view>
-      <view class="cost-bar"><view class="cost-bar-fill reason-fill" style="width:{{item.barWidth}}%"></view></view>
-      <view class="cost-val reason-val">{{item.qty}}</view>
-    </view>
-  </view>
   </block>
 
-  <view class="foot-note">数据：领星 + 金蝶财务（duoqubao-api 静态快照 {{generatedAt}}）· 盈亏/回款全期累计 · 趋势近 7 天 · opex 型号级偏漏</view>
+  <view class="foot-note">领星 + 金蝶财务(快照 {{generatedAt}})· 盈亏/回款全期累计</view>
 </view>

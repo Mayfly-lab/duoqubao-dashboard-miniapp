@@ -135,3 +135,5 @@
 .rb-drow { display: flex; justify-content: space-between; gap: 10rpx; padding: 4rpx 0; font-size: 19rpx; }
 .rb-dnm { color: var(--t1); flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .rb-dv { color: var(--t2); flex: 0 0 auto; }
+
+.rb-sub2 { font-size: 20rpx; color: var(--t2); font-weight: 600; margin: 2rpx 0 4rpx; }
