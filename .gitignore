@@ -1,2 +1,3 @@
 scripts/__pycache__/
 data/feishu_bitable.json
+.env

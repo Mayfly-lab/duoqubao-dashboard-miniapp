@@ -7,6 +7,21 @@
 import json, os, sys, urllib.request
 
 BASE = "https://open.feishu.cn/open-apis"
+
+
+def _load_dotenv():
+    """读项目根 .env(KEY=VALUE),已存在的环境变量优先。凭证放这里,不进 git。"""
+    p = os.path.join(os.path.dirname(__file__), "..", ".env")
+    if not os.path.exists(p):
+        return
+    for line in open(p, encoding="utf-8"):
+        line = line.strip()
+        if line and not line.startswith("#") and "=" in line:
+            k, v = line.split("=", 1)
+            os.environ.setdefault(k.strip(), v.strip().strip('"').strip("'"))
+
+
+_load_dotenv()
 APP_ID = os.environ.get("FEISHU_APP_ID")
 APP_SECRET = os.environ.get("FEISHU_APP_SECRET")
 
