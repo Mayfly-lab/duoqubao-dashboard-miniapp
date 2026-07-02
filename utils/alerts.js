@@ -10,7 +10,7 @@ const RULES = [
 const LEVEL_WEIGHT = { high: 2, mid: 1 }
 
 function money(n) {
-  const v = Math.round(n * 6.8)   // 领星美元 →¥(全页统一人民币,FX 6.8)
+  const v = Math.round(n * 7.16)   // 领星美元 →¥(全页统一人民币,FX 7.16)
   const a = Math.abs(v)
   const t = a >= 1e4 ? (a / 1e4).toFixed(1) + '万' : a.toLocaleString('en-US')
   return (v < 0 ? '-¥' : '¥') + t

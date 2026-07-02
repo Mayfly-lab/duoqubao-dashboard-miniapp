@@ -4,7 +4,7 @@ const api = require('../../utils/api.js')
 const { lineOf, procurementOf, procurementByModel, settleView, lineUnitCostMap, unitCostOf, realProfitUsd } = require('../../utils/aggregate.js')
 const registry = require('../../data/registry.js')
 
-const FX = 6.8                                   // USD→CNY(与时间轴口径一致)
+const FX = 7.16                                   // USD→CNY(与时间轴口径一致)
 const HEAD_FREIGHT_PER_UNIT = 15                 // 头程估:$15/台
 function fmtMoney(n) { const a = Math.abs(n), s = n < 0 ? '-$' : '$'; if (a >= 1e6) return s + (a / 1e6).toFixed(2) + 'M'; if (a >= 1e3) return s + (a / 1e3).toFixed(1) + 'k'; return s + Math.round(a) }
 const fmtCny = n => { const a = Math.abs(n); if (a >= 1e8) return '¥' + (a / 1e8).toFixed(2) + '亿'; if (a >= 1e4) return '¥' + (a / 1e4).toFixed(1) + '万'; return '¥' + Math.round(a) }

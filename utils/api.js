@@ -50,6 +50,10 @@ const lineUnitCostRows = () => Promise.resolve(SNAP.line_unit_cost || [])
 // 公司资金预览:资金盘(账上现金/待回款/库存货值 by 公司) + 欠厂应付总额
 const capital = () => Promise.resolve(SNAP.capital || [])
 const payableTotal = () => Promise.resolve((SNAP.payable_total || [])[0] || {})
+// 资金卡下钻:账户明细 / 欠厂供应商×合同 / 库龄分档(by 公司)
+const cashAccounts = () => Promise.resolve(SNAP.cash_accounts || [])
+const outstandingDetail = () => Promise.resolve(SNAP.outstanding_detail || [])
+const invAge = () => Promise.resolve(SNAP.inv_age || [])
 
 const dailyReports = () => Promise.resolve(SNAP.daily_reports || [])
 const checkinActions = () => Promise.resolve(SNAP.checkin_actions || [])
@@ -65,4 +69,4 @@ const monthlySalesByProduct = () => {
   return Promise.resolve(map)
 }
 
-module.exports = { num, projectsCompare, projectsList, projectCosts, projectPnl, dash, projectTimeline, projectOpex, projectReasons, generatedAt, allTimelines, allPendingTimelines, allPaybacks, capital, payableTotal, profitBase, lineUnitCostRows, dailyReports, checkinActions, monthlySalesByProduct }
+module.exports = { num, projectsCompare, projectsList, projectCosts, projectPnl, dash, projectTimeline, projectOpex, projectReasons, generatedAt, allTimelines, allPendingTimelines, allPaybacks, capital, payableTotal, cashAccounts, outstandingDetail, invAge, profitBase, lineUnitCostRows, dailyReports, checkinActions, monthlySalesByProduct }

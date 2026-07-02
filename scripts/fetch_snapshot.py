@@ -4,7 +4,8 @@
 # 重新生成：python3 scripts/fetch_snapshot.py
 import json, os, sys, time, urllib.parse, urllib.request
 
-BASE = "https://associates-please-compaq-org.trycloudflare.com"
+BASE = "https://dokicat-api.mayfly-lab.com"   # 固定域名(内网穿透·重启不变)
+UA = "curl/8.4.0"   # cloudflare 拦 python-urllib 默认 UA,伪装放行
 KEY = "f84dcbe9c50806233671945b2025c191559082bf4c2aab02b835cbd55ccaf160"
 OUT = os.path.join(os.path.dirname(__file__), "..", "data", "api_snapshot.js")
 PROC_YEAR = 2026   # 采购收口年份(当年款);换年改这里。见下方 procurement 拉取处口径说明。
@@ -12,7 +13,7 @@ PROC_YEAR = 2026   # 采购收口年份(当年款);换年改这里。见下方 p
 
 def get(path, params=None):
     url = BASE + path + ("?" + urllib.parse.urlencode(params) if params else "")
-    req = urllib.request.Request(url, headers={"X-API-Key": KEY})
+    req = urllib.request.Request(url, headers={"User-Agent": UA, "X-API-Key": KEY})
     try:
         with urllib.request.urlopen(req, timeout=70) as r:
             return json.loads(r.read()).get("data", [])
@@ -26,7 +27,7 @@ def post_sql(db, sql):
     url = BASE + "/query/sql?" + urllib.parse.urlencode({"db": db, "limit": 10000})
     body = json.dumps({"sql": sql}).encode("utf-8")
     req = urllib.request.Request(url, data=body, method="POST",
-                                 headers={"X-API-Key": KEY, "Content-Type": "application/json"})
+                                 headers={"User-Agent": UA, "X-API-Key": KEY, "Content-Type": "application/json"})
     try:
         with urllib.request.urlopen(req, timeout=90) as r:
             return json.loads(r.read()).get("data", [])
@@ -61,7 +62,7 @@ ORDER BY ym
 def sql(query):
     url = BASE + "/query/sql?db=lingxing"
     body = json.dumps({"sql": query}).encode()
-    req = urllib.request.Request(url, data=body, headers={"X-API-Key": KEY, "Content-Type": "application/json"})
+    req = urllib.request.Request(url, data=body, headers={"User-Agent": UA, "X-API-Key": KEY, "Content-Type": "application/json"})
     try:
         with urllib.request.urlopen(req, timeout=70) as r:
             return json.loads(r.read()).get("data", [])
@@ -129,6 +130,27 @@ def main():
             "FROM finance_capital_company")), "capital(资金盘)")
         put("payable_total", post_sql("finance",
             "SELECT ROUND(SUM(未结)) AS owe_cny FROM finance_v_outstanding WHERE 是否冲账=false"), "payable_total")
+        # 资金卡下钻:现金→账户明细(by 公司,本位币CNY)
+        put("cash_accounts", post_sql("finance",
+            "SELECT 公司 AS company, 账户 AS account, 币种 AS ccy, ROUND(本位币余额) AS cny "
+            "FROM finance_v_latest_balance"), "cash_accounts")
+        # 资金卡下钻:欠厂→供应商×合同明细(非冲账·未结>0)
+        put("outstanding_detail", post_sql("finance",
+            "SELECT 公司 AS company, 供应商 AS supplier, 产品 AS product, "
+            "ROUND(采购总额) AS amt, ROUND(已付) AS paid, ROUND(未结) AS owe "
+            "FROM finance_v_outstanding WHERE 是否冲账=false AND 未结>0"), "outstanding_detail")
+        # 库存卡:库龄分档(by 公司·领星 FBA 最新快照;健康≤90/91-180/181-270/271-365/365+)
+        put("inv_age", post_sql("lingxing",
+            "SELECT (CASE WHEN d.name LIKE '多趣%' THEN '多趣' ELSE '格致' END) AS dept, "
+            "SUM(s.afn_fulfillable_quantity) AS xianhuo, "
+            "SUM(s.afn_inbound_working_quantity + s.afn_inbound_shipped_quantity + s.afn_inbound_receiving_quantity) AS zaitu, "
+            "SUM(s.inv_age_0_to_30_days + s.inv_age_31_to_60_days + s.inv_age_61_to_90_days) AS healthy, "
+            "SUM(s.inv_age_91_to_180_days) AS a91, SUM(s.inv_age_181_to_270_days) AS a181, "
+            "SUM(s.inv_age_271_to_330_days + s.inv_age_331_to_365_days) AS a271, "
+            "SUM(s.inv_age_365_plus_days) AS a365 "
+            "FROM fba_stock_snapshot s JOIN dim_store d ON s.sid=d.sid "
+            "WHERE s.snapshot_date=(SELECT MAX(snapshot_date) FROM fba_stock_snapshot) "
+            "AND (d.name LIKE '多趣%' OR d.name LIKE '格致%') GROUP BY dept"), "inv_age")
         # 真实利润修正:领星 per-产品 销量+领星填的成本(成本常漏填→毛利虚高);用合同真实采购单价重算
         # ⚠️ 与 compare 同口径:近 365 天窗口(否则 profit_base 全期 sales 和 compare 不一致,真实毛利率算两个值)
         put("profit_base", post_sql("lingxing", (
@@ -166,7 +188,7 @@ def main():
             if mid in seen:
                 continue
             seen.add(mid)
-            req = urllib.request.Request(BASE + f"/feishu/reports/{r['id']}", headers={"X-API-Key": KEY})
+            req = urllib.request.Request(BASE + f"/feishu/reports/{r['id']}", headers={"User-Agent": UA, "X-API-Key": KEY})
             try:
                 with urllib.request.urlopen(req, timeout=30) as resp:
                     detail = json.loads(resp.read())

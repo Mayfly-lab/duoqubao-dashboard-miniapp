@@ -3,7 +3,7 @@
 const api = require('../../utils/api.js')
 const registry = require('../../data/registry.js')
 const { lineOf, settleView, procurementByModel, lineUnitCostMap, unitCostOf, realProfitUsd } = require('../../utils/aggregate.js')
-const FX = 6.8
+const FX = 7.16
 
 function fmtMoney(n) { const a = Math.abs(n), s = n < 0 ? '-$' : '$'; if (a >= 1e6) return s + (a / 1e6).toFixed(2) + 'M'; if (a >= 1e3) return s + (a / 1e3).toFixed(1) + 'k'; return s + Math.round(a) }
 const fmtCny = n => { const a = Math.abs(n); if (a >= 1e8) return '¥' + (a / 1e8).toFixed(2) + '亿'; if (a >= 1e4) return '¥' + (a / 1e4).toFixed(1) + '万'; return '¥' + Math.round(a) }

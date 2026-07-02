@@ -17,13 +17,13 @@ function fmtMoney(n) {
   if (a >= 1e3) return s + (a / 1e3).toFixed(1) + 'k'
   return s + Math.round(a)
 }
-const FX = 6.8                                   // USD→CNY(与类页/时间轴口径一致)
+const FX = 7.16                                   // USD→CNY(与类页/时间轴口径一致)
 const fmtCny = n => { const a = Math.abs(n), s = n < 0 ? '-¥' : '¥'; return a >= 1e4 ? s + (a / 1e4).toFixed(0) + '万' : s + Math.round(a) }
 
 Page({
   data: {
     generatedAt: api.generatedAt,
-    kpi: {}, fund: {}, inv: {}, opexMod: {}, pnlExpanded: false,
+    kpi: {}, fund: {}, inv: {}, opexMod: {}, pnlExpanded: true,
     alerts: [], alertTotal: 0, alertFilter: 'all', alertFilters: ALERT_FILTERS, showAllAlerts: false,
     categories: [], catTotal: 0, catFilter: 'all', catFilters: CAT_FILTERS, showAllCats: false, expandedLine: '',
     loading: true, error: '',

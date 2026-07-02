@@ -6,7 +6,7 @@ const api = require('../../utils/api.js')
 const registry = require('../../data/registry.js')
 const { lineOf, lineUnitCostMap, unitCostOf, realProfitUsd } = require('../../utils/aggregate.js')
 
-const FX = 6.8
+const FX = 7.16
 
 function fmtMoney(n) {
   const a = Math.abs(n), s = n < 0 ? '-$' : '$'

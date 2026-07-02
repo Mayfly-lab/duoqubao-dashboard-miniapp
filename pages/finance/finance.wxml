@@ -74,10 +74,10 @@
     </view>
   </view>
 
-  <!-- 销售盈亏(次要,折叠) -->
+  <!-- 销售盈亏 -->
   <view class="card sales-card" bindtap="onTogglePnl">
     <view class="card-head">
-      <view class="card-title">📊 销售盈亏（次要）</view>
+      <view class="card-title">📊 销售盈亏</view>
       <text class="collapse-arrow">{{pnlExpanded ? '▲' : '▼'}}</text>
     </view>
     <view wx:if="{{pnlExpanded}}">
@@ -95,7 +95,7 @@
       <view class="net-line">
         <text class="net-key">≈ 净利</text>
         <text class="net-val {{kpi.netLoss ? 'text-pink' : 'text-green'}}">{{kpi.netText}}</text>
-        <text class="net-note">{{kpi.hasReal ? '真实毛利' : '毛利'}}换汇 {{kpi.grossCnyText}} − 公司运营费 {{kpi.opexCnyText}}（FX 6.8;仅全公司层可算）</text>
+        <text class="net-note">{{kpi.hasReal ? '真实毛利' : '毛利'}}换汇 {{kpi.grossCnyText}} − 公司运营费 {{kpi.opexCnyText}}（FX 7.16;仅全公司层可算）</text>
       </view>
     </view>
   </view>

@@ -48,7 +48,7 @@
 ## 2. 数据来源(重要)
 
 - 小程序**还没认证、配不了合法域名** → 走**本地快照** `data/api_snapshot.js`(免域名,体验版可跑)。
-- 快照由 `scripts/fetch_snapshot.py` 通过 **duoqubao-api(客户部署机内网穿透 tunnel)** 预拉。⚠️ trycloudflare 是临时域名会变,换了改脚本里 `BASE`。
+- 快照由 `scripts/fetch_snapshot.py` 通过 **duoqubao-api(客户部署机内网穿透)** 预拉。✅ 已固定域名 `https://dokicat-api.mayfly-lab.com`(重启不变),脚本 `BASE` 已更新。
 - 产品/人员/权限:`scripts/build_registry.py` 把 `data/multibot_product_registry...csv` 结构化成 `data/registry.js`(399 产品/49 人员,含 部门/类目/负责人/权限/asin)。
 - 后端 = **duoqubao-api**(只读领星 + 金蝶财务,走 ssh→macmini DuckDB,详见其自带 CLAUDE.md)。
 
