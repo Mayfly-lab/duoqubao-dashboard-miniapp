@@ -69,6 +69,21 @@ Page({
         realizedText: fmtCny(realized * FX), pendingText: fmtCny(pending * FX),
       }
 
+      // 回本双条(能收回=已到账+待回款 vs 已支付采购;判断换品/止损)
+      const proc = procurementOf(procurement, line)   // 活跃代已支付(CNY)
+      const recoverCny = (realized + pending) * FX
+      const paidCny = proc.paid
+      const rbMax = Math.max(recoverCny, paidCny, 1)
+      const payback0 = {
+        recoverText: fmtCny(recoverCny), realizedText: fmtCny(realized * FX), pendingText: fmtCny(pending * FX),
+        paidText: fmtCny(paidCny), year: proc.year,
+        realizedW: Math.round(realized * FX / rbMax * 100),
+        pendingW: Math.round(pending * FX / rbMax * 100),
+        paidW: Math.round(paidCny / rbMax * 100),
+        recovered: recoverCny >= paidCny,
+        hasPaid: paidCny > 0,
+      }
+
       // 费用(fees 加总,USD)
       const feeAgg = { commission: 0, fba_delivery: 0, ads_cost: 0, storage: 0, refunds: 0 }
       let salesFromFees = 0
@@ -95,7 +110,6 @@ Page({
       // ── L0 双进度条(对齐 demo §2.2 口径,统一 CNY) ──
       // 投入 = 采购合同全额(含税·amount) + 头程(¥15/台估) + 运营opex;回款 = 已到账(realized) + 在途(pending)。
       // 回本率 = (已到账+在途) / 全投入。采购取本线「活跃代年份」(采购额最大年),与回款同代,治款混不打骨折。
-      const proc = procurementOf(procurement, line)
       const headFreight = proc.qty * HEAD_FREIGHT_PER_UNIT * FX
       const realizedCny = realized * FX, pendingCny = pending * FX
       const invest = proc.amount + headFreight + opexTotal   // 全投入
@@ -189,7 +203,7 @@ Page({
         .map(s => ({ asin: s.asin, star: s.star, reviews: s.reviews, low: N(s.star) < 3.5 }))
         .sort((a, b) => N(a.star) - N(b.star))
 
-      this.setData({ kpi, level0, four, settle, models, unmappedText, hasReal: this._hasReal, timeline, fees, ads, refund, inventory: inv, stars, opex, loading: false })
+      this.setData({ kpi, payback0, level0, four, settle, models, unmappedText, hasReal: this._hasReal, timeline, fees, ads, refund, inventory: inv, stars, opex, loading: false })
     } catch (e) {
       this.setData({ loading: false, error: '加载失败：' + (e.message || e) })
     }

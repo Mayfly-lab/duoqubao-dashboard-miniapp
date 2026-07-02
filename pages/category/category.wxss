@@ -114,3 +114,17 @@
 .badge-unstocked { display:inline-block; margin-left:10rpx; padding:2rpx 10rpx; font-size:20rpx; color:#c77b13; background:rgba(240,160,32,.14); border-radius:6rpx; vertical-align:middle; }
 .cat-unstocked { opacity:.72; }
 .text-mut { color:#9aa6bc; }
+
+/* ═══ 回本双条(能收回 vs 已支付) ═══ */
+.rb-year { font-size: 18rpx; color: var(--t3); font-weight: normal; }
+.rb-lab { font-size: 20rpx; color: var(--t2); margin-top: 14rpx; }
+.rb-b { font-weight: 700; font-size: 26rpx; color: var(--t1); margin: 0 8rpx 0 4rpx; }
+.rb-sub { font-size: 17rpx; color: var(--t3); }
+.rb-track { height: 34rpx; background: var(--tint); border-radius: 8rpx; display: flex; overflow: hidden; margin: 8rpx 0; }
+.rb-seg { height: 100%; }
+.rb-got { background: #18b888; }
+.rb-pend { background: #7fd8bd; }
+.rb-paid { background: #f0a020; border-radius: 8rpx; }
+.rb-verdict { font-size: 20rpx; padding: 12rpx 14rpx; border-radius: 8rpx; margin-top: 12rpx; }
+.rb-ok { background: rgba(24,184,136,.1); color: #18b888; }
+.rb-warn { background: rgba(245,69,92,.1); color: #f5455c; }

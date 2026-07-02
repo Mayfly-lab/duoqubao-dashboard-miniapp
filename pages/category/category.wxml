@@ -3,6 +3,22 @@
   <view wx:if="{{error}}" class="card" style="color:#f5455c">{{error}}</view>
 
   <block wx:if="{{!loading && !error}}">
+  <!-- 💰 回本双条(现金流:能收回 vs 已支付)· 最前 -->
+  <view class="card">
+    <view class="card-title">💰 回本情况<text class="rb-year" wx:if="{{payback0.year}}"> · {{payback0.year}}款 全期</text></view>
+    <view class="rb-lab">能收回 <text class="rb-b text-green">{{payback0.recoverText}}</text><text class="rb-sub">已到账 {{payback0.realizedText}} + 待回款 {{payback0.pendingText}}</text></view>
+    <view class="rb-track">
+      <view class="rb-seg rb-got" style="width:{{payback0.realizedW}}%"></view>
+      <view class="rb-seg rb-pend" style="width:{{payback0.pendingW}}%"></view>
+    </view>
+    <view class="rb-lab">已支付 <text class="rb-b">{{payback0.paidText}}</text><text class="rb-sub">采购已付的现金(投入)</text></view>
+    <view class="rb-track">
+      <view class="rb-seg rb-paid" style="width:{{payback0.paidW}}%"></view>
+    </view>
+    <view wx:if="{{payback0.hasPaid}}" class="rb-verdict {{payback0.recovered ? 'rb-ok' : 'rb-warn'}}">{{payback0.recovered ? '✓ 已回本:能收回 ≥ 已支付' : '⚠️ 已支付 > 能收回,回款慢/考虑换品止损'}}</view>
+    <view wx:else class="card-hint">本类采购未归集到金蝶(大杂烩/长尾),已支付暂无法计算</view>
+  </view>
+
   <!-- 类整体 + 回款 -->
   <view class="card">
     <view class="cat-title">{{line}}<text class="cat-tag">{{models.length}} 型号</text></view>

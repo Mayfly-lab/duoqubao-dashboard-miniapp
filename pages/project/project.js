@@ -12,7 +12,7 @@ const fmtShort = n => { const a = Math.abs(n); if (a >= 1e6) return (n < 0 ? '-'
 
 Page({
   data: {
-    name: '', generatedAt: api.generatedAt, proj: null, locate: null, trend: [], costs: [], settle: null, procurement: null, realProfit: null, owners: [],
+    name: '', generatedAt: api.generatedAt, proj: null, payback0: null, locate: null, trend: [], costs: [], settle: null, procurement: null, realProfit: null, owners: [],
     payback: null, inventory: null, refund: null, ads: null,
     timeline: [], stars: [], opexActions: [], reasons: [],
     loading: true, error: '',
@@ -57,6 +57,20 @@ Page({
         amountText: fmtCny(pm.amount), qty: pm.qty.toLocaleString('en-US'),
         paidText: fmtCny(pm.paid), oweText: fmtCny(pm.outstanding),
       } : null
+
+      // 回本双条(产品层:能收回=已到账+待回款 vs 已支付;型号已支付串不到→标类级)
+      const pbRow = (payback || []).find(r => r.local_name === name) || {}
+      const rlz = N(pbRow.realized_usd) * FX, pnd = N(pbRow.pending_usd) * FX
+      const rbRecover = rlz + pnd
+      const rbPaid = pm ? pm.paid : 0
+      const rbMax = Math.max(rbRecover, rbPaid, 1)
+      const payback0 = {
+        recoverText: fmtCny(rbRecover), realizedText: fmtCny(rlz), pendingText: fmtCny(pnd),
+        paidText: rbPaid ? fmtCny(rbPaid) : '—',
+        realizedW: Math.round(rlz / rbMax * 100), pendingW: Math.round(pnd / rbMax * 100),
+        paidW: Math.round(rbPaid / rbMax * 100),
+        recovered: rbRecover >= rbPaid, hasPaid: rbPaid > 0,
+      }
 
       // 头部:全期汇总(与类页/财务同口径),毛利=真实毛利(合同成本修正)。近期看下方趋势图。
       const cmpRow = compare.find(p => p.local_name === name) || {}
@@ -143,7 +157,7 @@ Page({
       ].filter(Boolean) : []
 
       this.setData({
-        proj, locate, trend, costs, settle, procurement: procurementCard, realProfit, owners, timeline: tl, stars, opexActions, reasons,
+        proj, locate, trend, costs, settle, procurement: procurementCard, payback0, realProfit, owners, timeline: tl, stars, opexActions, reasons,
         payback: paybackData, inventory: inventoryData, refund: refundData, ads: adsData, loading: false,
       })
     } catch (e) {
