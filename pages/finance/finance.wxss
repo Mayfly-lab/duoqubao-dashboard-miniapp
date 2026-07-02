@@ -269,3 +269,18 @@
 .byb-name { font-size: 22rpx; color: var(--t1); font-weight: 600; flex: 0 0 90rpx; }
 .byb-sales { font-size: 22rpx; color: var(--t1); flex: 1; }
 .byb-margin { font-size: 20rpx; flex: 0 0 auto; }
+
+/* ═══ 滞销超龄·每档一行横条(越久越深,覆盖上面 age-1~4) ═══ */
+.age-total { font-size: 20rpx; color: #f5455c; font-weight: 700; margin-left: 6rpx; }
+.age-sub2 { font-size: 17rpx; color: var(--t3); margin: 4rpx 0 10rpx; }
+.ab-row { display: flex; align-items: center; gap: 10rpx; padding: 5rpx 0; }
+.ab-lab { font-size: 19rpx; color: var(--t2); flex: 0 0 140rpx; }
+.ab-track { flex: 1; height: 16rpx; background: var(--tint); border-radius: 4rpx; overflow: hidden; }
+.ab-fill { height: 100%; border-radius: 4rpx; }
+.ab-val { font-size: 19rpx; color: var(--t1); flex: 0 0 auto; min-width: 90rpx; text-align: right; }
+.ab-warn .ab-lab, .ab-warn .ab-val { color: #8A3A1E; font-weight: 700; }
+.age-healthy { font-size: 18rpx; color: var(--t2); margin-top: 10rpx; }
+.age-1 { background: #E8B89E; }
+.age-2 { background: #D98E66; }
+.age-3 { background: #C66A43; }
+.age-4 { background: #8A3A1E; }

@@ -159,17 +159,19 @@ Page({
     const healthy = aSum('healthy'), a91 = aSum('a91'), a181 = aSum('a181'), a271 = aSum('a271'), a365 = aSum('a365')
     const totalAge = healthy + a91 + a181 + a271 + a365 || 1
     const stale = a91 + a181 + a271 + a365   // 超90天(压资金)
-    const ageBars = [
-      { label: '≤90天·健康', qty: healthy, cls: 'age-h' },
-      { label: '91-180', qty: a91, cls: 'age-1' },
-      { label: '181-270', qty: a181, cls: 'age-2' },
-      { label: '271-365', qty: a271, cls: 'age-3' },
-      { label: '365+·深积压', qty: a365, cls: 'age-4' },
-    ].map(b => ({ ...b, qtyText: b.qty.toLocaleString('en-US'), pct: +(b.qty / totalAge * 100).toFixed(1) }))
+    // 滞销超龄:每档单独一行横条,越久越深(相对最大档填充);365+ 高亮
+    const maxStale = Math.max(a91, a181, a271, a365, 1)
+    const staleBars = [
+      { label: '91-180 天', qty: a91, cls: 'age-1' },
+      { label: '181-270 天', qty: a181, cls: 'age-2' },
+      { label: '271-365 天', qty: a271, cls: 'age-3' },
+      { label: '365 天+', qty: a365, cls: 'age-4', warn: true },
+    ].map(b => ({ ...b, qtyText: b.qty.toLocaleString('en-US'), pct: Math.max(2, Math.round(b.qty / maxStale * 100)) }))
     const inv = {
       goods: fund.goods, stockValue: fund.stock, transitValue: fund.transit,
       xianhuo: xianhuo.toLocaleString('en-US'), zaitu: zaitu.toLocaleString('en-US'),
-      ageBars, staleQty: stale.toLocaleString('en-US'), stalePct: +(stale / totalAge * 100).toFixed(0),
+      staleBars, healthyText: healthy.toLocaleString('en-US'),
+      staleQty: stale.toLocaleString('en-US'), stalePct: +(stale / totalAge * 100).toFixed(0),
       age365Text: a365.toLocaleString('en-US'),
     }
     // ── 销售卡(公司级):销售额/销量/毛利率/退款率/广告TAcos + 按部门(复用开头 sales/profit/adCost) ──

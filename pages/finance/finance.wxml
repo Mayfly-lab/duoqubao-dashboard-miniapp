@@ -89,13 +89,14 @@
       <view class="fund-item"><view class="fund-num text-yellow">{{inv.zaitu}}</view><view class="fund-label">在途(件)</view></view>
       <view class="fund-item"><view class="fund-num text-pink">{{inv.staleQty}}</view><view class="fund-label">滞销&gt;90天 · {{inv.stalePct}}%</view></view>
     </view>
-    <view class="age-title">库龄分档 <text class="age-sub">越久越深 · 深积压365+ {{inv.age365Text}} 件</text></view>
-    <view class="age-bar">
-      <view wx:for="{{inv.ageBars}}" wx:key="label" class="age-seg {{item.cls}}" style="width:{{item.pct}}%"></view>
+    <view class="age-title">滞销 · 超龄 &gt; 90 天 <text class="age-total">{{inv.staleQty}} 件</text></view>
+    <view class="age-sub2">颜色越深 = 库龄越久(超 90 天起算)</view>
+    <view wx:for="{{inv.staleBars}}" wx:key="label" class="ab-row {{item.warn ? 'ab-warn' : ''}}">
+      <text class="ab-lab">{{item.label}}</text>
+      <view class="ab-track"><view class="ab-fill {{item.cls}}" style="width:{{item.pct}}%"></view></view>
+      <text class="ab-val">{{item.qtyText}}</text>
     </view>
-    <view class="age-legend">
-      <view wx:for="{{inv.ageBars}}" wx:key="label" class="age-lg"><text class="age-dot {{item.cls}}"></text>{{item.label}} {{item.qtyText}}</view>
-    </view>
+    <view class="age-healthy">✓ 健康 ≤90 天 {{inv.healthyText}} 件 · 深积压 365天+ <text class="text-pink">{{inv.age365Text}} 件</text></view>
   </view>
 
   <!-- 📊 销售大盘卡 -->
