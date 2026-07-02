@@ -189,12 +189,12 @@
 
       <view class="cat-bar"><view class="cat-bar-fill" style="width:{{item.barWidth}}%"></view></view>
 
-      <!-- 展开：每产品双进度条(能拿回 vs 要付) -->
+      <!-- 展开：每产品回本双条(能收回 vs 已支付)· 重点=盈利(能收回−已支付) -->
       <view wx:if="{{item.expanded}}" class="cat-detail">
-        <view class="fb-legend"><text class="fb-dot fb-dot-got"></text>已到账 <text class="fb-dot fb-dot-pend"></text>待回款 <text class="fb-dot fb-dot-owe"></text>要付(欠厂) · 同比例尺</view>
+        <view class="fb-legend"><text class="fb-dot fb-dot-got"></text>已到账 <text class="fb-dot fb-dot-pend"></text>待回款 <text class="fb-dot fb-dot-paid"></text>已支付 · 盈利=能收回−已支付</view>
         <view wx:for="{{item.bars}}" wx:for-item="b" wx:key="name" class="fb-prod">
-          <view class="fb-name">{{b.name}}</view>
-          <!-- 能拿回:已到账(实) + 待回款(斜纹) -->
+          <view class="fb-name">{{b.name}}<text class="fb-back {{b.profitBackLoss ? 'text-pink' : 'text-green'}}">{{b.profitBackText}}</text></view>
+          <!-- 能收回:已到账(实) + 待回款 -->
           <view class="fb-row">
             <view class="fb-track">
               <view class="fb-seg fb-got" style="width:{{b.realizedW}}%"></view>
@@ -202,15 +202,15 @@
             </view>
             <text class="fb-val">{{b.recoverText}}</text>
           </view>
-          <!-- 要付:欠厂 -->
+          <!-- 已支付 -->
           <view class="fb-row">
             <view class="fb-track">
-              <view wx:if="{{b.hasOwe}}" class="fb-seg fb-owe" style="width:{{b.oweW}}%"></view>
+              <view wx:if="{{b.hasPaid}}" class="fb-seg fb-paid" style="width:{{b.paidW}}%"></view>
             </view>
-            <text class="fb-val {{b.covered ? '' : 'text-pink'}}">{{b.hasOwe ? b.oweText : '—'}}</text>
+            <text class="fb-val">{{b.hasPaid ? b.paidText : '—'}}</text>
           </view>
         </view>
-        <view wx:if="{{item.bars.length === 0}}" class="empty-hint">该类暂无回款/欠厂数据</view>
+        <view wx:if="{{item.bars.length === 0}}" class="empty-hint">该类暂无回款/采购数据</view>
         <view class="enter-btn" data-line="{{item.line}}" catchtap="onEnterCategory">进入类看板 ›</view>
       </view>
     </view>

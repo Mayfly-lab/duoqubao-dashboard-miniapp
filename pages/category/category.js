@@ -26,6 +26,9 @@ Page({
     this.fetch(line)
   },
 
+  // 回本双条点条→展开明细(recover/paid)
+  onRbSeg(e) { const seg = e.currentTarget.dataset.seg; this.setData({ rbSeg: this.data.rbSeg === seg ? '' : seg }) },
+
   async fetch(line) {
     this.setData({ loading: true, error: '' })
     try {
@@ -83,6 +86,16 @@ Page({
         recovered: recoverCny >= paidCny,
         hasPaid: paidCny > 0,
       }
+      // 回本明细(点条展开):能收回=各产品到账/待回;已支付=各型号采购已付
+      const recoverDetail = products.map(p => {
+        const r = pbMap[p.local_name] || {}
+        const rl = N(r.realized_usd) * FX, pd = N(r.pending_usd) * FX
+        return { name: p.local_name, realizedText: fmtCny(rl), pendingText: fmtCny(pd), recoverText: fmtCny(rl + pd), _v: rl + pd }
+      }).filter(x => x._v > 0).sort((a, b) => b._v - a._v)
+      const byModelPaid = procurementByModel(procurement, line).byModel
+      const paidDetail = Object.keys(byModelPaid).map(m => ({
+        name: m, paidText: fmtCny(byModelPaid[m].paid), amtText: fmtCny(byModelPaid[m].amount), _v: byModelPaid[m].paid,
+      })).filter(x => x._v > 0).sort((a, b) => b._v - a._v)
 
       // 费用(fees 加总,USD)
       const feeAgg = { commission: 0, fba_delivery: 0, ads_cost: 0, storage: 0, refunds: 0 }
@@ -203,7 +216,7 @@ Page({
         .map(s => ({ asin: s.asin, star: s.star, reviews: s.reviews, low: N(s.star) < 3.5 }))
         .sort((a, b) => N(a.star) - N(b.star))
 
-      this.setData({ kpi, payback0, level0, four, settle, models, unmappedText, hasReal: this._hasReal, timeline, fees, ads, refund, inventory: inv, stars, opex, loading: false })
+      this.setData({ kpi, payback0, recoverDetail, paidDetail, rbSeg: "", level0, four, settle, models, unmappedText, hasReal: this._hasReal, timeline, fees, ads, refund, inventory: inv, stars, opex, loading: false })
     } catch (e) {
       this.setData({ loading: false, error: '加载失败：' + (e.message || e) })
     }

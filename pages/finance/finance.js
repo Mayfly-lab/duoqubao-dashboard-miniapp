@@ -265,19 +265,20 @@ Page({
       const pb = pbMap[name] || {}
       const realizedCny = N(pb.realized_usd) * FX
       const pendingCny = N(pb.pending_usd) * FX
-      const oweCny = (byModel[name] || {}).outstanding || 0
-      return { name, realizedCny, pendingCny, oweCny, recover: realizedCny + pendingCny }
-    }).filter(p => p.recover > 0 || p.oweCny > 0)
-    const scale = Math.max(1, ...prods.map(p => Math.max(p.recover, p.oweCny)))
-    return prods.sort((a, b) => b.recover - a.recover).map(p => ({
+      const paidCny = (byModel[name] || {}).paid || 0          // 已支付(采购已付现金)
+      const recover = realizedCny + pendingCny                  // 能收回
+      return { name, realizedCny, pendingCny, paidCny, recover, profitBack: recover - paidCny }
+    }).filter(p => p.recover > 0 || p.paidCny > 0)
+    const scale = Math.max(1, ...prods.map(p => Math.max(p.recover, p.paidCny)))
+    return prods.sort((a, b) => b.profitBack - a.profitBack).map(p => ({
       name: p.name,
       realizedText: fmtCny(p.realizedCny), pendingText: fmtCny(p.pendingCny),
-      oweText: fmtCny(p.oweCny), recoverText: fmtCny(p.recover),
+      paidText: fmtCny(p.paidCny), recoverText: fmtCny(p.recover),
+      profitBackText: (p.profitBack >= 0 ? '+' : '') + fmtCny(p.profitBack), profitBackLoss: p.profitBack < 0,
       realizedW: p.realizedCny > 0 ? Math.max(2, Math.round(p.realizedCny / scale * 100)) : 0,
       pendingW: p.pendingCny > 0 ? Math.max(3, Math.round(p.pendingCny / scale * 100)) : 0,
-      oweW: p.oweCny > 0 ? Math.max(3, Math.round(p.oweCny / scale * 100)) : 0,
-      covered: p.recover >= p.oweCny,           // 能拿回是否盖住要付
-      hasOwe: p.oweCny > 0,
+      paidW: p.paidCny > 0 ? Math.max(3, Math.round(p.paidCny / scale * 100)) : 0,
+      hasPaid: p.paidCny > 0,
     }))
   },
   onCatFilterChange(e) { this.setData({ catFilter: e.detail.value, showAllCats: false, expandedLine: '' }, () => this.renderCats()) },

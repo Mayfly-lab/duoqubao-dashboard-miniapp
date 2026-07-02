@@ -6,17 +6,33 @@
   <!-- 💰 回本双条(现金流:能收回 vs 已支付)· 最前 -->
   <view class="card">
     <view class="card-title">💰 回本情况<text class="rb-year" wx:if="{{payback0.year}}"> · {{payback0.year}}款 全期</text></view>
-    <view class="rb-lab">能收回 <text class="rb-b text-green">{{payback0.recoverText}}</text><text class="rb-sub">已到账 {{payback0.realizedText}} + 待回款 {{payback0.pendingText}}</text></view>
-    <view class="rb-track">
+    <view class="rb-lab">能收回 <text class="rb-b text-green">{{payback0.recoverText}}</text><text class="rb-sub">已到账 {{payback0.realizedText}} + 待回款 {{payback0.pendingText}} · 点条看明细</text></view>
+    <view class="rb-track" data-seg="recover" bindtap="onRbSeg">
       <view class="rb-seg rb-got" style="width:{{payback0.realizedW}}%"></view>
       <view class="rb-seg rb-pend" style="width:{{payback0.pendingW}}%"></view>
     </view>
-    <view class="rb-lab">已支付 <text class="rb-b">{{payback0.paidText}}</text><text class="rb-sub">采购已付的现金(投入)</text></view>
-    <view class="rb-track">
+    <view class="rb-lab">已支付 <text class="rb-b">{{payback0.paidText}}</text><text class="rb-sub">采购已付的现金(投入)· 点条看明细</text></view>
+    <view class="rb-track" data-seg="paid" bindtap="onRbSeg">
       <view class="rb-seg rb-paid" style="width:{{payback0.paidW}}%"></view>
     </view>
     <view wx:if="{{payback0.hasPaid}}" class="rb-verdict {{payback0.recovered ? 'rb-ok' : 'rb-warn'}}">{{payback0.recovered ? '✓ 已回本:能收回 ≥ 已支付' : '⚠️ 已支付 > 能收回,回款慢/考虑换品止损'}}</view>
     <view wx:else class="card-hint">本类采购未归集到金蝶(大杂烩/长尾),已支付暂无法计算</view>
+    <!-- 点条明细 -->
+    <view wx:if="{{rbSeg === 'recover'}}" class="rb-detail">
+      <view class="rb-dt">能收回明细 · 各产品(已到账 / 待回款)</view>
+      <view wx:for="{{recoverDetail}}" wx:key="name" class="rb-drow">
+        <text class="rb-dnm">{{item.name}}</text>
+        <text class="rb-dv"><text class="text-green">{{item.realizedText}}</text> / <text class="text-yellow">{{item.pendingText}}</text></text>
+      </view>
+    </view>
+    <view wx:if="{{rbSeg === 'paid'}}" class="rb-detail">
+      <view class="rb-dt">已支付明细 · 各型号采购(已付 / 采购额)</view>
+      <view wx:for="{{paidDetail}}" wx:key="name" class="rb-drow">
+        <text class="rb-dnm">{{item.name}}</text>
+        <text class="rb-dv">{{item.paidText}} / {{item.amtText}}</text>
+      </view>
+      <view wx:if="{{paidDetail.length === 0}}" class="card-hint">型号级已支付串不到(规范名只到类级)</view>
+    </view>
   </view>
 
   <!-- 类整体 + 回款 -->

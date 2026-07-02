@@ -9,17 +9,32 @@
   <!-- 💰 回本双条(能收回 vs 已支付)· 最前 -->
   <view wx:if="{{payback0}}" class="card">
     <view class="card-title">💰 回本情况</view>
-    <view class="rb-lab">能收回 <text class="rb-b text-green">{{payback0.recoverText}}</text><text class="rb-sub">已到账 {{payback0.realizedText}} + 待回款 {{payback0.pendingText}}</text></view>
-    <view class="rb-track">
+    <view class="rb-lab">能收回 <text class="rb-b text-green">{{payback0.recoverText}}</text><text class="rb-sub">已到账 {{payback0.realizedText}} + 待回款 {{payback0.pendingText}} · 点条看明细</text></view>
+    <view class="rb-track" data-seg="recover" bindtap="onRbSeg">
       <view class="rb-seg rb-got" style="width:{{payback0.realizedW}}%"></view>
       <view class="rb-seg rb-pend" style="width:{{payback0.pendingW}}%"></view>
     </view>
-    <view class="rb-lab">已支付 <text class="rb-b">{{payback0.paidText}}</text><text class="rb-sub">采购已付现金(投入)</text></view>
-    <view class="rb-track">
+    <view class="rb-lab">已支付 <text class="rb-b">{{payback0.paidText}}</text><text class="rb-sub">采购已付现金(投入)· 点条看明细</text></view>
+    <view class="rb-track" data-seg="paid" bindtap="onRbSeg">
       <view class="rb-seg rb-paid" style="width:{{payback0.paidW}}%"></view>
     </view>
     <view wx:if="{{payback0.hasPaid}}" class="rb-verdict {{payback0.recovered ? 'rb-ok' : 'rb-warn'}}">{{payback0.recovered ? '✓ 已回本:能收回 ≥ 已支付' : '⚠️ 已支付 > 能收回,回款慢/考虑换品止损'}}</view>
     <view wx:else class="card-hint">该型号已支付串不到金蝶合同(规范名只到类级)· 见类页回本</view>
+    <!-- 点条明细 -->
+    <view wx:if="{{rbSeg === 'recover'}}" class="rb-detail">
+      <view class="rb-dt">能收回明细</view>
+      <view class="rb-drow"><text class="rb-dnm">已到账(真金)</text><text class="rb-dv text-green">{{payback0.realizedText}}</text></view>
+      <view class="rb-drow"><text class="rb-dnm">待回款(在路上)</text><text class="rb-dv text-yellow">{{payback0.pendingText}}</text></view>
+    </view>
+    <view wx:if="{{rbSeg === 'paid'}}" class="rb-detail">
+      <view class="rb-dt">已支付明细 · 采购</view>
+      <block wx:if="{{procurement}}">
+        <view class="rb-drow"><text class="rb-dnm">采购总额</text><text class="rb-dv">{{procurement.amountText}}</text></view>
+        <view class="rb-drow"><text class="rb-dnm">已付</text><text class="rb-dv">{{procurement.paidText}}</text></view>
+        <view class="rb-drow"><text class="rb-dnm">欠厂未付</text><text class="rb-dv text-pink">{{procurement.oweText}}</text></view>
+      </block>
+      <view wx:else class="card-hint">该型号采购串不到金蝶合同(规范名只到类级)</view>
+    </view>
   </view>
 
   <!-- 头部指标 -->

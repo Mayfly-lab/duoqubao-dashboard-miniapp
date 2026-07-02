@@ -79,3 +79,10 @@
 .rb-verdict { font-size: 20rpx; padding: 12rpx 14rpx; border-radius: 8rpx; margin-top: 12rpx; }
 .rb-ok { background: rgba(24,184,136,.1); color: #18b888; }
 .rb-warn { background: rgba(245,69,92,.1); color: #f5455c; }
+
+/* 回本双条点条明细 */
+.rb-detail { margin-top: 12rpx; padding: 10rpx 12rpx; background: var(--tint); border-radius: 8rpx; }
+.rb-dt { font-size: 19rpx; color: var(--t2); font-weight: 600; margin-bottom: 6rpx; }
+.rb-drow { display: flex; justify-content: space-between; gap: 10rpx; padding: 4rpx 0; font-size: 19rpx; }
+.rb-dnm { color: var(--t1); flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rb-dv { color: var(--t2); flex: 0 0 auto; }

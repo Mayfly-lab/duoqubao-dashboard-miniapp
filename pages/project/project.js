@@ -13,7 +13,7 @@ const fmtShort = n => { const a = Math.abs(n); if (a >= 1e6) return (n < 0 ? '-'
 Page({
   data: {
     name: '', generatedAt: api.generatedAt, proj: null, payback0: null, locate: null, trend: [], costs: [], settle: null, procurement: null, realProfit: null, owners: [],
-    payback: null, inventory: null, refund: null, ads: null,
+    payback: null, inventory: null, refund: null, ads: null, rbSeg: '',
     timeline: [], stars: [], opexActions: [], reasons: [],
     loading: true, error: '',
   },
@@ -24,6 +24,8 @@ Page({
     wx.setNavigationBarTitle({ title: name || '产品看板' })
     this.fetch(name)
   },
+
+  onRbSeg(e) { const seg = e.currentTarget.dataset.seg; this.setData({ rbSeg: this.data.rbSeg === seg ? '' : seg }) },
 
   async fetch(name) {
     this.setData({ loading: true, error: '' })

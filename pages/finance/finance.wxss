@@ -284,3 +284,8 @@
 .age-2 { background: #D98E66; }
 .age-3 { background: #C66A43; }
 .age-4 { background: #8A3A1E; }
+
+/* 类对比展开·回本双条(已支付段 + 盈利) */
+.fb-dot-paid { background: #f0a020; }
+.fb-paid { background: #f0a020; }
+.fb-back { font-size: 21rpx; font-weight: 700; margin-left: 10rpx; }
