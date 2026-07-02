@@ -206,3 +206,46 @@
 
 /* 毛利"真实"小标 */
 .real-flag { display:inline-block; margin-left:6rpx; padding:0 8rpx; font-size:18rpx; color:#18b888; background:rgba(24,184,136,.12); border-radius:5rpx; vertical-align:middle; }
+
+/* ═══ 资金卡(能拿回 vs 应付线 → 可动用) ═══ */
+.board-eyebrow { font-size: 19rpx; color: var(--t3); }
+.fc-headline { font: 700 52rpx 'DIN Alternate','Space Grotesk',sans-serif; margin: 2rpx 0 6rpx; }
+.fc-hl-lab { font-size: 22rpx; font-weight: 500; color: var(--t3); margin-left: 10rpx; }
+.fc-lab { font-size: 21rpx; color: var(--t2); margin-top: 16rpx; }
+.fc-b { font-weight: 700; color: var(--t1); font-size: 26rpx; margin-left: 4rpx; }
+.fc-lab2 { font-size: 18rpx; color: var(--t3); margin: 6rpx 0 2rpx; }
+/* 条 */
+.fc-bar { position: relative; height: 48rpx; display: flex; background: var(--tint); border-radius: 10rpx; margin: 8rpx 0; }
+.fc-seg { height: 48rpx; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.fc-seg:first-child { border-radius: 10rpx 0 0 10rpx; }
+.fc-seg-t { font-size: 18rpx; color: #fff; white-space: nowrap; padding: 0 6rpx; }
+.fc-cash { background: #2b6cff; }
+.fc-pend { background: #9dbcff; }
+.fc-owe { background: #f5455c; border-radius: 10rpx; }
+.fc-bar-owe { background: var(--tint); }
+/* 应付线(竖虚线) */
+.fc-oweline { position: absolute; top: -8rpx; bottom: -8rpx; width: 0; border-left: 3rpx dashed #1f2a3c; z-index: 2; }
+.fc-oweline-t { position: absolute; top: -26rpx; left: 6rpx; font-size: 15rpx; color: #1f2a3c; white-space: nowrap; }
+/* 健康提示 */
+.fc-health { font-size: 20rpx; padding: 12rpx 14rpx; border-radius: 8rpx; margin-top: 14rpx; }
+.fc-ok { background: rgba(24,184,136,.1); color: #18b888; }
+.fc-warn { background: rgba(245,69,92,.1); color: #f5455c; }
+/* 下钻明细 */
+.fc-detail { margin-top: 16rpx; padding-top: 12rpx; border-top: 1rpx solid var(--line); }
+.fc-dtitle { font-size: 22rpx; color: var(--t2); font-weight: 600; margin-bottom: 10rpx; display: flex; justify-content: space-between; }
+.fc-dclose { color: var(--t3); font-weight: normal; }
+.fc-drow { display: flex; align-items: center; gap: 10rpx; padding: 7rpx 0; }
+.fc-dname { font-size: 20rpx; color: var(--t1); flex: 0 0 190rpx; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fc-dtag { font-size: 16rpx; color: var(--t3); }
+.fc-dexp { font-size: 16rpx; color: var(--t3); }
+.fc-dbar { flex: 1; height: 12rpx; background: var(--tint); border-radius: 6rpx; overflow: hidden; }
+.fc-dbar-f { height: 100%; border-radius: 6rpx; }
+.fc-df-cash { background: #2b6cff; }
+.fc-df-owe { background: #f5455c; }
+.fc-dval { font-size: 20rpx; color: var(--t1); flex: 0 0 auto; min-width: 120rpx; text-align: right; }
+.fc-contracts { padding: 6rpx 0 8rpx 16rpx; background: var(--tint); border-radius: 8rpx; margin: 4rpx 0 8rpx; }
+.fc-crow { display: flex; justify-content: space-between; gap: 8rpx; padding: 5rpx 10rpx; font-size: 18rpx; }
+.fc-cnm { color: var(--t1); flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fc-camt { color: var(--t3); flex: 0 0 auto; }
+.fc-cowe { flex: 0 0 auto; }
+.fc-dnote { font-size: 19rpx; color: var(--t2); line-height: 1.5; }

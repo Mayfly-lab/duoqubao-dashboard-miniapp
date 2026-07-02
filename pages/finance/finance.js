@@ -24,6 +24,7 @@ Page({
   data: {
     generatedAt: api.generatedAt,
     kpi: {}, fund: {}, inv: {}, opexMod: {}, pnlExpanded: true,
+    cashDetail: [], oweSuppliers: [], fundSeg: '', expandedSupplier: '',
     alerts: [], alertTotal: 0, alertFilter: 'all', alertFilters: ALERT_FILTERS, showAllAlerts: false,
     categories: [], catTotal: 0, catFilter: 'all', catFilters: CAT_FILTERS, showAllCats: false, expandedLine: '',
     loading: true, error: '',
@@ -37,13 +38,15 @@ Page({
   async fetch() {
     this.setData({ loading: true, error: '' })
     try {
-      const [rows, plist, payback, opexCompany, capital, payable, procurement, inventory, reports, profitBase, unitRows] = await Promise.all([
+      const [rows, plist, payback, opexCompany, capital, payable, procurement, inventory, reports, profitBase, unitRows, cashAccounts, outstanding] = await Promise.all([
         api.projectsCompare(), api.projectsList(), api.dash('payback'), api.dash('opex_company'),
         api.capital(), api.payableTotal(), api.dash('procurement'), api.dash('inventory'), api.dailyReports(),
-        api.profitBase(), api.lineUnitCostRows(),
+        api.profitBase(), api.lineUnitCostRows(), api.cashAccounts(), api.outstandingDetail(),
       ])
       this._profitBase = profitBase
       this._unitMap = lineUnitCostMap(unitRows)
+      this._cashAccounts = cashAccounts || []
+      this._outstanding = outstanding || []
       this._procurement = procurement
       this._opexCompany = opexCompany || []
       this._opexCompanyTotal = this._opexCompany.reduce((s, r) => s + api.num(r.amount_cny), 0)
@@ -101,24 +104,50 @@ Page({
       lxMarginPct: sales ? (lxProfit / sales * 100).toFixed(1) : '0.0',   // 领星虚高
       correctionText: fmtCny((lxProfit - profit) * FX),                   // 挤掉的虚高额
     }
-    // ── 公司资金预览(翰毅:钱和货最重要,放最前) ──
+    // ── 资金卡(现金流核心):能拿回(现金+待回) vs 欠厂应付线 → 可动用 ──
     const cap = this._capital || []
     const N = api.num
     const cashCny = cap.reduce((s, r) => s + N(r.cash_cny), 0)
-    const pendingCny = cap.reduce((s, r) => s + N(r.pending_usd), 0) * FX   // 卡着没回(待回款)
-    const oweCny = N((this._payable || {}).owe_cny)                          // 还要付(欠厂)
-    const stockCny = cap.reduce((s, r) => s + N(r.stock_usd), 0) * FX        // 在库货值
-    const transitCny = cap.reduce((s, r) => s + N(r.transit_usd), 0) * FX    // 在途货值
+    const pendingCny = cap.reduce((s, r) => s + N(r.pending_usd), 0) * FX   // 待回款(在路上)
+    const recoverCny = cashCny + pendingCny                                  // 能拿回(最乐观)
+    const oweCny = (this._outstanding || []).reduce((s, r) => s + N(r.owe), 0) || N((this._payable || {}).owe_cny)
+    const deployCny = recoverCny - oweCny                                    // 可动用(越过应付线)
+    const stockCny = cap.reduce((s, r) => s + N(r.stock_usd), 0) * FX
+    const transitCny = cap.reduce((s, r) => s + N(r.transit_usd), 0) * FX
     const stockQty = cap.reduce((s, r) => s + N(r.stock_qty), 0)
+    const denom = recoverCny || 1
     const fund = {
-      cash: fmtCny(cashCny),
-      pending: fmtCny(pendingCny),
-      owe: fmtCny(oweCny),
-      stock: fmtCny(stockCny),
+      cashText: fmtCny(cashCny), pendingText: fmtCny(pendingCny), recoverText: fmtCny(recoverCny),
+      oweText: fmtCny(oweCny), deployText: fmtCny(Math.abs(deployCny)), deployNeg: deployCny < 0,
+      cashPct: +(cashCny / denom * 100).toFixed(2),
+      pendPct: +(pendingCny / denom * 100).toFixed(2),
+      owePct: +Math.min(100, oweCny / denom * 100).toFixed(2),   // 应付线位置
+      healthy: cashCny >= oweCny,                                // 光现金盖得住应付=健康
+      // 货值(库存卡复用)
+      stock: fmtCny(stockCny), transit: fmtCny(transitCny), goods: fmtCny(stockCny + transitCny),
       stockQty: stockQty.toLocaleString('en-US'),
-      transit: fmtCny(transitCny),
-      goods: fmtCny(stockCny + transitCny),   // 货:在库+在途货值
     }
+    // 现金明细(点现金段):账户
+    const cashMax = Math.max(...(this._cashAccounts || []).map(a => N(a.cny)), 1)
+    const cashDetail = (this._cashAccounts || []).slice().sort((a, b) => N(b.cny) - N(a.cny)).map(a => ({
+      account: a.account, company: a.company, ccy: a.ccy,
+      cnyText: fmtCny(N(a.cny)), pct: Math.max(3, Math.round(N(a.cny) / cashMax * 100)),
+    }))
+    // 欠厂供应商明细(点欠厂段):按供应商聚合 + 合同(产品)
+    const supMap = {}
+    ;(this._outstanding || []).forEach(r => {
+      if (N(r.owe) <= 0) return
+      const s = supMap[r.supplier] || (supMap[r.supplier] = { supplier: r.supplier, owe: 0, amt: 0, contracts: [] })
+      s.owe += N(r.owe); s.amt += N(r.amt)
+      s.contracts.push({ nm: r.product, amtText: fmtCny(N(r.amt)), oweText: fmtCny(N(r.owe)), _owe: N(r.owe) })
+    })
+    const supList = Object.values(supMap).sort((a, b) => b.owe - a.owe)
+    const supMax = supList.length ? supList[0].owe : 1
+    const oweSuppliers = supList.map(s => ({
+      supplier: s.supplier, oweText: fmtCny(s.owe), amtText: fmtCny(s.amt),
+      pct: Math.max(4, Math.round(s.owe / supMax * 100)),
+      contracts: s.contracts.sort((a, b) => b._owe - a._owe).slice(0, 20),
+    }))
     // ── 库存模块(公司级):现货/在途/在库货值 + 滞销(库龄危险来自日报) ──
     const invList = this._inventory || []
     const xianhuo = invList.reduce((s, r) => s + N(r.xianhuo), 0)
@@ -158,10 +187,21 @@ Page({
       barWidth: Math.max(4, Math.round(c.sales / top * 100)),
     }))
     const rawAlerts = detect(list)
-    this.setData({ kpi, fund, inv, opexMod, rawCategories, rawAlerts, expandedLine: '' })
+    this.setData({ kpi, fund, inv, opexMod, cashDetail, oweSuppliers, rawCategories, rawAlerts, expandedLine: '' })
     this.renderAlerts()
     this.renderCats()
   },
+
+  // ── 资金卡下钻:点段(现金/待回/欠厂/可动用)展开明细;欠厂再点供应商看合同 ──
+  onFundSeg(e) {
+    const seg = e.currentTarget.dataset.seg
+    this.setData({ fundSeg: this.data.fundSeg === seg ? '' : seg, expandedSupplier: '' })
+  },
+  onSupplierTap(e) {
+    const s = e.currentTarget.dataset.supplier
+    this.setData({ expandedSupplier: this.data.expandedSupplier === s ? '' : s })
+  },
+  onFundClose() { this.setData({ fundSeg: '', expandedSupplier: '' }) },
 
   // ── 待关注:筛选 + 折叠 ──
   renderAlerts() {

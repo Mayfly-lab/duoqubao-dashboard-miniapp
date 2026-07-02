@@ -23,28 +23,60 @@
     </view>
   </view>
 
-  <!-- 公司资金预览(钱和货优先) -->
+  <!-- 💵 资金卡:能拿回 vs 欠厂应付线 → 可动用 -->
   <view class="card">
-    <view class="card-title">💰 公司资金预览</view>
-    <view class="card-hint">电商先看钱和货 · 多趣+格致合计 · 数据快照 {{generatedAt}}</view>
-    <view class="fund-grid">
-      <view class="fund-item fund-cash">
-        <view class="fund-num">{{fund.cash}}</view>
-        <view class="fund-label">账上现金</view>
-      </view>
-      <view class="fund-item">
-        <view class="fund-num text-yellow">{{fund.pending}}</view>
-        <view class="fund-label">卡着没回（待回款）</view>
-      </view>
-      <view class="fund-item">
-        <view class="fund-num text-pink">{{fund.owe}}</view>
-        <view class="fund-label">还要付（欠厂）</view>
-      </view>
-      <view class="fund-item">
-        <view class="fund-num text-blue">{{fund.goods}}</view>
-        <view class="fund-label">货值 · {{fund.stockQty}} 件（在库+在途）</view>
+    <view class="board-eyebrow">等钱全收回、欠款全付清,账上大约还剩</view>
+    <view class="fc-headline {{fund.deployNeg ? 'text-pink' : 'text-green'}}">{{fund.deployNeg ? '−' : ''}}{{fund.deployText}}<text class="fc-hl-lab">可动用</text></view>
+
+    <view class="fc-lab">钱能拿回 · 最乐观 <text class="fc-b">{{fund.recoverText}}</text></view>
+    <view class="fc-bar">
+      <view class="fc-seg fc-cash" style="width:{{fund.cashPct}}%" data-seg="cash" bindtap="onFundSeg"><text class="fc-seg-t">现金 {{fund.cashText}}</text></view>
+      <view class="fc-seg fc-pend" style="width:{{fund.pendPct}}%" data-seg="pend" bindtap="onFundSeg"><text class="fc-seg-t">待回 {{fund.pendingText}}</text></view>
+      <view class="fc-oweline" style="left:{{fund.owePct}}%"><text class="fc-oweline-t">应付线 {{fund.oweText}}</text></view>
+    </view>
+    <view class="fc-lab2">↑ 越过应付线的部分 = 可动用 · 点条看明细</view>
+
+    <view class="fc-lab">钱要付出去 · 已知应付 <text class="fc-b">{{fund.oweText}}</text></view>
+    <view class="fc-bar fc-bar-owe">
+      <view class="fc-seg fc-owe" style="width:{{fund.owePct}}%" data-seg="owe" bindtap="onFundSeg"><text class="fc-seg-t">欠供应商 {{fund.oweText}}</text></view>
+    </view>
+
+    <view class="fc-health {{fund.healthy ? 'fc-ok' : 'fc-warn'}}">{{fund.healthy ? '✓ 健康:光账上现金就盖得住全部已知应付' : '! 警惕:应付已超过账上现金,现金流吃紧'}}</view>
+
+    <!-- 下钻:现金账户 -->
+    <view wx:if="{{fundSeg === 'cash'}}" class="fc-detail">
+      <view class="fc-dtitle">账上现金 · {{cashDetail.length}} 账户<text class="fc-dclose" bindtap="onFundClose">收起 ✕</text></view>
+      <view wx:for="{{cashDetail}}" wx:key="account" class="fc-drow">
+        <text class="fc-dname">{{item.account}} <text class="fc-dtag">{{item.company}}·{{item.ccy}}</text></text>
+        <view class="fc-dbar"><view class="fc-dbar-f fc-df-cash" style="width:{{item.pct}}%"></view></view>
+        <text class="fc-dval">{{item.cnyText}}</text>
       </view>
     </view>
+    <!-- 下钻:欠供应商 → 合同 -->
+    <view wx:if="{{fundSeg === 'owe'}}" class="fc-detail">
+      <view class="fc-dtitle">欠供应商 · {{oweSuppliers.length}} 家<text class="fc-dclose" bindtap="onFundClose">收起 ✕</text></view>
+      <view wx:for="{{oweSuppliers}}" wx:key="supplier" class="fc-sup">
+        <view class="fc-drow" data-supplier="{{item.supplier}}" bindtap="onSupplierTap">
+          <text class="fc-dname">{{item.supplier}} <text class="fc-dexp">{{expandedSupplier === item.supplier ? '▲' : '▼'}}</text></text>
+          <view class="fc-dbar"><view class="fc-dbar-f fc-df-owe" style="width:{{item.pct}}%"></view></view>
+          <text class="fc-dval text-pink">{{item.oweText}}</text>
+        </view>
+        <view wx:if="{{expandedSupplier === item.supplier}}" class="fc-contracts">
+          <view wx:for="{{item.contracts}}" wx:for-item="c" wx:key="nm" class="fc-crow">
+            <text class="fc-cnm">{{c.nm}}</text>
+            <text class="fc-camt">采购 {{c.amtText}}</text>
+            <text class="fc-cowe text-pink">欠 {{c.oweText}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+    <!-- 下钻:待回款 -->
+    <view wx:if="{{fundSeg === 'pend'}}" class="fc-detail">
+      <view class="fc-dtitle">待回款 {{fund.pendingText}}<text class="fc-dclose" bindtap="onFundClose">收起 ✕</text></view>
+      <view class="fc-dnote">平台在途货款,约 2-3 周滚动到账。视界短(只看得到近端),更远的排不出来。</view>
+    </view>
+
+    <view class="card-hint">现金/待回/欠厂=真账 · 待回只看平台在途 · 欠厂到期时点不准(合同日期损坏)· 多趣+格致合计 · 快照 {{generatedAt}}</view>
   </view>
 
   <!-- 库存模块 -->
