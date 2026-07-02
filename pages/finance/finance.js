@@ -195,11 +195,7 @@ Page({
     const opexMax = opexRows.length ? N(opexRows[0].amount_cny) : 1
     const opexMod = {
       total: fmtCny(this._opexCompanyTotal || 0),
-      items: opexRows.slice(0, 8).map(o => ({
-        category: o.category, costText: fmtCny(N(o.amount_cny)),
-        barWidth: Math.max(6, Math.round(N(o.amount_cny) / opexMax * 100)),
-      })),
-      reimburse: '待补', // 报销依赖员工填报,先占位
+      top3: opexRows.slice(0, 3).map(o => o.category + ' ' + fmtCny(N(o.amount_cny))).join(' · '),
     }
     const cats = groupByCategory(list, this.data._payback)
     const top = cats.length ? Math.max(...cats.map(c => c.sales)) : 1

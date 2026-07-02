@@ -118,44 +118,18 @@
     <view wx:if="{{sales.refundPct}}" class="card-hint">退款率 {{sales.refundPct}}%</view>
   </view>
 
-  <!-- 经营费用模块 -->
+  <!-- 💸 经营费用 & 净利(精简一行) -->
   <view class="card">
-    <view class="card-title">💸 经营费用</view>
-    <view class="card-hint">运营费用=金蝶真账(按对方科目) · 报销待员工填报补全 · 合计 {{opexMod.total}}</view>
-    <view wx:for="{{opexMod.items}}" wx:key="category" class="cost-row">
-      <view class="cost-name">{{item.category}}</view>
-      <view class="cost-bar"><view class="cost-bar-fill opex-fill" style="width:{{item.barWidth}}%"></view></view>
-      <view class="cost-val">{{item.costText}}</view>
+    <view class="card-title">💸 经营费用 & 净利</view>
+    <view class="net-line">
+      <text class="net-key">运营费</text>
+      <text class="net-val">{{opexMod.total}}</text>
+      <text class="net-note">{{opexMod.top3}} …(金蝶真账 · 报销待补)</text>
     </view>
-    <view class="opex-placeholder">
-      <text class="ph-row">📋 员工报销 · <text class="text-dim">待填报补全</text></text>
-      <text class="ph-row">🏷️ 滞销长期仓储费 · <text class="text-dim">待接入</text></text>
-    </view>
-  </view>
-
-  <!-- 销售盈亏 -->
-  <view class="card sales-card" bindtap="onTogglePnl">
-    <view class="card-head">
-      <view class="card-title">📊 销售盈亏</view>
-      <text class="collapse-arrow">{{pnlExpanded ? '▲' : '▼'}}</text>
-    </view>
-    <view wx:if="{{pnlExpanded}}">
-      <view class="kpi-grid">
-        <view class="kpi-item"><view class="kpi-num text-blue">{{kpi.sales}}</view><view class="kpi-label">销售额</view></view>
-        <view class="kpi-item"><view class="kpi-num {{kpi.profit[0] === '-' ? 'text-pink' : 'text-green'}}">{{kpi.profit}}</view><view class="kpi-label">毛利<text wx:if="{{kpi.hasReal}}" class="real-flag">真实</text></view></view>
-        <view class="kpi-item"><view class="kpi-num text-yellow">{{kpi.marginPct}}%</view><view class="kpi-label">毛利率<text wx:if="{{kpi.hasReal}}" class="real-flag">真实</text></view></view>
-        <view class="kpi-item"><view class="kpi-num text-purple">{{kpi.acosPct}}%</view><view class="kpi-label">综合 ACOS</view></view>
-      </view>
-      <!-- 真实毛利口径说明 -->
-      <view wx:if="{{kpi.hasReal}}" class="net-line">
-        <text class="net-key">毛利口径</text>
-        <text class="net-note"><text class="text-blue">已用合同成本修正</text>：领星毛利按员工填的成本算,常漏填→虚高(原报毛利率 {{kpi.lxMarginPct}}%)。真实毛利 = 领星毛利 − (销量×<text class="text-blue">合同采购单价</text> − 领星填的成本),即把没填的成本补回去。本次挤掉虚高 {{kpi.correctionText}}。⚠️ 合同单价取类级均价(型号有差异)·未扣海运头程(真实或更低)。</text>
-      </view>
-      <view class="net-line">
-        <text class="net-key">≈ 净利</text>
-        <text class="net-val {{kpi.netLoss ? 'text-pink' : 'text-green'}}">{{kpi.netText}}</text>
-        <text class="net-note">{{kpi.hasReal ? '真实毛利' : '毛利'}}换汇 {{kpi.grossCnyText}} − 公司运营费 {{kpi.opexCnyText}}（FX 7.16;仅全公司层可算）</text>
-      </view>
+    <view class="net-line">
+      <text class="net-key">≈ 净利</text>
+      <text class="net-val {{kpi.netLoss ? 'text-pink' : 'text-green'}}">{{kpi.netText}}</text>
+      <text class="net-note">{{kpi.hasReal ? '真实毛利' : '毛利'}} {{kpi.grossCnyText}} − 运营费 {{kpi.opexCnyText}}(仅全公司层可算)</text>
     </view>
   </view>
 
