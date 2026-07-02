@@ -1,6 +1,7 @@
 // 老板总览(个人工具·只老板视角):全公司整体盈亏 + 产品类对比(折叠/筛选) + 待关注(折叠/筛选)。
 const api = require('../../utils/api.js')
 const { groupByCategory, procurementByModel, lineUnitCostMap, unitCostOf, realProfitUsd } = require('../../utils/aggregate.js')
+const registry = require('../../data/registry.js')
 const { detect } = require('../../utils/alerts.js')
 
 const ALERT_FILTERS = [
@@ -23,7 +24,7 @@ const fmtCny = n => { const a = Math.abs(n), s = n < 0 ? '-¥' : '¥'; return a 
 Page({
   data: {
     generatedAt: api.generatedAt,
-    kpi: {}, fund: {}, inv: {}, opexMod: {}, pnlExpanded: true,
+    kpi: {}, fund: {}, inv: {}, sales: {}, opexMod: {}, pnlExpanded: true,
     cashDetail: [], oweSuppliers: [], fundSeg: '', expandedSupplier: '',
     alerts: [], alertTotal: 0, alertFilter: 'all', alertFilters: ALERT_FILTERS, showAllAlerts: false,
     categories: [], catTotal: 0, catFilter: 'all', catFilters: CAT_FILTERS, showAllCats: false, expandedLine: '',
@@ -43,10 +44,13 @@ Page({
         api.capital(), api.payableTotal(), api.dash('procurement'), api.dash('inventory'), api.dailyReports(),
         api.profitBase(), api.lineUnitCostRows(), api.cashAccounts(), api.outstandingDetail(),
       ])
+      const [invAge, refund] = await Promise.all([api.invAge(), api.dash('refund')])
       this._profitBase = profitBase
       this._unitMap = lineUnitCostMap(unitRows)
       this._cashAccounts = cashAccounts || []
       this._outstanding = outstanding || []
+      this._invAge = invAge || []
+      this._refund = refund || []
       this._procurement = procurement
       this._opexCompany = opexCompany || []
       this._opexCompanyTotal = this._opexCompany.reduce((s, r) => s + api.num(r.amount_cny), 0)
@@ -148,22 +152,41 @@ Page({
       pct: Math.max(4, Math.round(s.owe / supMax * 100)),
       contracts: s.contracts.sort((a, b) => b._owe - a._owe).slice(0, 20),
     }))
-    // ── 库存模块(公司级):现货/在途/在库货值 + 滞销(库龄危险来自日报) ──
-    const invList = this._inventory || []
-    const xianhuo = invList.reduce((s, r) => s + N(r.xianhuo), 0)
-    const zaitu = invList.reduce((s, r) => s + N(r.zaitu), 0)
-    const fbaTotal = invList.reduce((s, r) => s + N(r.fba_total), 0)
-    // 滞销:取最近一条日报的"库龄危险"(msku超365/270天 + 件数)
-    const fc = (this._reports || []).map(r => r.full_content || {}).find(c => c['库龄危险']) || {}
-    const aged = fc['库龄危险'] || {}
+    // ── 库存卡(公司级):货值 + 现货/在途 + 库龄分档(超90天越深) ──
+    const ageRows = this._invAge || []
+    const aSum = k => ageRows.reduce((s, r) => s + N(r[k]), 0)
+    const xianhuo = aSum('xianhuo'), zaitu = aSum('zaitu')
+    const healthy = aSum('healthy'), a91 = aSum('a91'), a181 = aSum('a181'), a271 = aSum('a271'), a365 = aSum('a365')
+    const totalAge = healthy + a91 + a181 + a271 + a365 || 1
+    const stale = a91 + a181 + a271 + a365   // 超90天(压资金)
+    const ageBars = [
+      { label: '≤90天·健康', qty: healthy, cls: 'age-h' },
+      { label: '91-180', qty: a91, cls: 'age-1' },
+      { label: '181-270', qty: a181, cls: 'age-2' },
+      { label: '271-365', qty: a271, cls: 'age-3' },
+      { label: '365+·深积压', qty: a365, cls: 'age-4' },
+    ].map(b => ({ ...b, qtyText: b.qty.toLocaleString('en-US'), pct: +(b.qty / totalAge * 100).toFixed(1) }))
     const inv = {
-      xianhuo: xianhuo.toLocaleString('en-US'),
-      zaitu: zaitu.toLocaleString('en-US'),
-      fbaTotal: fbaTotal.toLocaleString('en-US'),
-      stockValue: fund.stock, transitValue: fund.transit, qty: fund.stockQty,
-      agedQty365: N(aged.qty_over_365) ? N(aged.qty_over_365).toLocaleString('en-US') : '—',
-      agedMsku365: aged.msku_over_365 != null ? String(aged.msku_over_365) : '—',
-      agedQty270: N(aged.qty_270plus) ? N(aged.qty_270plus).toLocaleString('en-US') : '—',
+      goods: fund.goods, stockValue: fund.stock, transitValue: fund.transit,
+      xianhuo: xianhuo.toLocaleString('en-US'), zaitu: zaitu.toLocaleString('en-US'),
+      ageBars, staleQty: stale.toLocaleString('en-US'), stalePct: +(stale / totalAge * 100).toFixed(0),
+      age365Text: a365.toLocaleString('en-US'),
+    }
+    // ── 销售卡(公司级):销售额/销量/毛利率/退款率/广告TAcos + 按部门(复用开头 sales/profit/adCost) ──
+    const qtyAll = (this._profitBase || []).reduce((s, b) => s + N(b.qty), 0)
+    const refundUsd = (this._refund || []).reduce((s, r) => s + Math.abs(N(r.refund_amount != null ? r.refund_amount : r.refund)), 0)
+    const deptAgg = { 多趣: { s: 0, p: 0 }, 格致: { s: 0, p: 0 } }
+    list.forEach(p => { const d = (registry.byProduct[p.local_name] || {}).dept; if (deptAgg[d]) { deptAgg[d].s += p.sales; deptAgg[d].p += p.profit } })
+    const salesCard = {
+      salesText: fmtCny(sales * FX), qty: Math.round(qtyAll).toLocaleString('en-US'),
+      marginPct: sales ? (profit / sales * 100).toFixed(1) : '0.0',
+      tacosPct: sales ? (adCost / sales * 100).toFixed(1) : '0.0',
+      refundPct: (sales && refundUsd) ? (refundUsd / sales * 100).toFixed(1) : null,
+      depts: ['多趣', '格致'].map(d => ({
+        name: d, salesText: fmtCny(deptAgg[d].s * FX),
+        marginPct: deptAgg[d].s ? (deptAgg[d].p / deptAgg[d].s * 100).toFixed(1) : '0.0',
+        loss: deptAgg[d].p < 0,
+      })),
     }
     // ── 经营费用模块:运营费用类目(opex 公司级·真账) + 滞销费/报销(待补·先搭UI) ──
     const opexRows = (this._opexCompany || []).slice().sort((a, b) => N(b.amount_cny) - N(a.amount_cny))
@@ -187,7 +210,7 @@ Page({
       barWidth: Math.max(4, Math.round(c.sales / top * 100)),
     }))
     const rawAlerts = detect(list)
-    this.setData({ kpi, fund, inv, opexMod, cashDetail, oweSuppliers, rawCategories, rawAlerts, expandedLine: '' })
+    this.setData({ kpi, fund, inv, sales: salesCard, opexMod, cashDetail, oweSuppliers, rawCategories, rawAlerts, expandedLine: '' })
     this.renderAlerts()
     this.renderCats()
   },

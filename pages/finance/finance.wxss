@@ -249,3 +249,23 @@
 .fc-camt { color: var(--t3); flex: 0 0 auto; }
 .fc-cowe { flex: 0 0 auto; }
 .fc-dnote { font-size: 19rpx; color: var(--t2); line-height: 1.5; }
+
+/* ═══ 库存卡·库龄横条 ═══ */
+.age-title { font-size: 21rpx; color: var(--t2); margin-top: 16rpx; }
+.age-sub { font-size: 17rpx; color: var(--t3); margin-left: 6rpx; }
+.age-bar { display: flex; height: 22rpx; border-radius: 6rpx; overflow: hidden; margin: 10rpx 0; background: var(--tint); }
+.age-seg { height: 100%; }
+.age-h { background: #18b888; }
+.age-1 { background: #f0c020; }
+.age-2 { background: #f0a020; }
+.age-3 { background: #f5704a; }
+.age-4 { background: #f5455c; }
+.age-legend { display: flex; flex-wrap: wrap; gap: 6rpx 16rpx; }
+.age-lg { font-size: 17rpx; color: var(--t2); display: flex; align-items: center; }
+.age-dot { display: inline-block; width: 14rpx; height: 14rpx; border-radius: 3rpx; margin-right: 5rpx; }
+/* ═══ 销售卡·按部门 ═══ */
+.byb-title { font-size: 21rpx; color: var(--t2); margin: 16rpx 0 8rpx; font-weight: 600; }
+.byb-row { display: flex; align-items: center; padding: 8rpx 0; border-top: 1rpx solid var(--line); }
+.byb-name { font-size: 22rpx; color: var(--t1); font-weight: 600; flex: 0 0 90rpx; }
+.byb-sales { font-size: 22rpx; color: var(--t1); flex: 1; }
+.byb-margin { font-size: 20rpx; flex: 0 0 auto; }

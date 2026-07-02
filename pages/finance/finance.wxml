@@ -79,16 +79,42 @@
     <view class="card-hint">现金/待回/欠厂=真账 · 待回只看平台在途 · 欠厂到期时点不准(合同日期损坏)· 多趣+格致合计 · 快照 {{generatedAt}}</view>
   </view>
 
-  <!-- 库存模块 -->
+  <!-- 📦 库存货值卡 -->
   <view class="card">
-    <view class="card-title">📦 库存</view>
-    <view class="card-hint">现货可马上卖 · 在途已发未到 · 滞销=库龄超 365 天(占用现金)</view>
+    <view class="card-title">📦 库存货值</view>
+    <view class="card-hint">钱变成的货现在在哪 · 超 90 天压资金 · 多趣+格致</view>
     <view class="fund-grid">
-      <view class="fund-item"><view class="fund-num text-blue">{{inv.xianhuo}}</view><view class="fund-label">现货可售(件)</view></view>
+      <view class="fund-item"><view class="fund-num text-blue">{{inv.goods}}</view><view class="fund-label">货值(在库+在途)</view></view>
+      <view class="fund-item"><view class="fund-num">{{inv.xianhuo}}</view><view class="fund-label">现货(件)</view></view>
       <view class="fund-item"><view class="fund-num text-yellow">{{inv.zaitu}}</view><view class="fund-label">在途(件)</view></view>
-      <view class="fund-item"><view class="fund-num">{{inv.stockValue}}</view><view class="fund-label">在库货值</view></view>
-      <view class="fund-item"><view class="fund-num text-pink">{{inv.agedQty365}}</view><view class="fund-label">滞销 ·超365天(件)/{{inv.agedMsku365}}款</view></view>
+      <view class="fund-item"><view class="fund-num text-pink">{{inv.staleQty}}</view><view class="fund-label">滞销&gt;90天 · {{inv.stalePct}}%</view></view>
     </view>
+    <view class="age-title">库龄分档 <text class="age-sub">越久越深 · 深积压365+ {{inv.age365Text}} 件</text></view>
+    <view class="age-bar">
+      <view wx:for="{{inv.ageBars}}" wx:key="label" class="age-seg {{item.cls}}" style="width:{{item.pct}}%"></view>
+    </view>
+    <view class="age-legend">
+      <view wx:for="{{inv.ageBars}}" wx:key="label" class="age-lg"><text class="age-dot {{item.cls}}"></text>{{item.label}} {{item.qtyText}}</view>
+    </view>
+  </view>
+
+  <!-- 📊 销售大盘卡 -->
+  <view class="card">
+    <view class="card-title">📊 销售大盘</view>
+    <view class="card-hint">领星真账 · 全期 · 毛利=真实毛利 · 多趣+格致</view>
+    <view class="kpi-grid">
+      <view class="kpi-item"><view class="kpi-num text-blue">{{sales.salesText}}</view><view class="kpi-label">销售额</view></view>
+      <view class="kpi-item"><view class="kpi-num">{{sales.qty}}</view><view class="kpi-label">销量(件)</view></view>
+      <view class="kpi-item"><view class="kpi-num text-green">{{sales.marginPct}}%</view><view class="kpi-label">毛利率<text class="real-flag">真实</text></view></view>
+      <view class="kpi-item"><view class="kpi-num text-purple">{{sales.tacosPct}}%</view><view class="kpi-label">广告 TAcos</view></view>
+    </view>
+    <view class="byb-title">按部门拆分</view>
+    <view wx:for="{{sales.depts}}" wx:key="name" class="byb-row">
+      <text class="byb-name">{{item.name}}</text>
+      <text class="byb-sales">{{item.salesText}}</text>
+      <text class="byb-margin {{item.loss ? 'text-pink' : 'text-green'}}">毛利率 {{item.marginPct}}%</text>
+    </view>
+    <view wx:if="{{sales.refundPct}}" class="card-hint">退款率 {{sales.refundPct}}%</view>
   </view>
 
   <!-- 经营费用模块 -->
